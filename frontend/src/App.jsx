@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Trades from './pages/Trades';
 import Alerts from './pages/Alerts';
 import AlertDetails from './pages/AlertDetails';
+import BounceIndicator from "./components/BounceIndicator";
 
 const App = () => {
     return (
@@ -17,6 +18,8 @@ const App = () => {
                 <Route path="/alerts" element={<Alerts />} />
                 <Route path="/alerts/:id" element={<AlertDetails />} />
             </Routes>
+
+            <BounceIndicator />
         </Router>
     );
 };
