@@ -31,6 +31,9 @@ export const getRiskTrend = () => {
 export const getTrades = () => {
     return api.get("/trades");
 };
+export const createTrade = (tradeData) => {
+    return api.post("/trades", tradeData);
+};
 
 export const getAlerts = () => {
     return api.get("/alerts");
