@@ -10,7 +10,7 @@ const Register = () => {
         name: "",
         email: "",
         password: "",
-        role: "ANALYST"
+        adminSecret: ""
     });
 
     const [loading, setLoading] = useState(false);
@@ -111,18 +111,21 @@ const Register = () => {
 
                     <div>
                         <label className="mb-1 block text-sm font-medium text-slate-700">
-                            Role
+                            Admin Secret Code Optional
                         </label>
 
-                        <select
-                            name="role"
-                            value={formData.role}
+                        <input
+                            type="password"
+                            name="adminSecret"
+                            value={formData.adminSecret}
                             onChange={handleChange}
+                            placeholder="Only admin should know this"
                             className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-indigo-500"
-                        >
-                            <option value="ANALYST">ANALYST</option>
-                            <option value="ADMIN">ADMIN</option>
-                        </select>
+                        />
+
+                        <p className="mt-1 text-xs text-slate-500">
+                            Leave this empty to register as an analyst.
+                        </p>
                     </div>
 
                     {error && (

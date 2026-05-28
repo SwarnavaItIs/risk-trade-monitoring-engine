@@ -12,7 +12,7 @@ const generateToken = (userId) => {
 
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, adminSecret } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ message: "Please provide name, email and password" });
@@ -23,6 +23,15 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: "Email already in use" });
         }
 
+        const role = "ANALYST";
+        if (adminSecret) {
+            if (adminSecret === process.env.ADMIN_REGISTRATION_SECRET) {
+                role = "ADMIN";
+            } else {
+                return res.status(400).json({ message: "Invalid admin registration secret" });
+            }
+        }
+        
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await User.create({
