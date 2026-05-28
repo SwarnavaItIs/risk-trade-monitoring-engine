@@ -111,7 +111,7 @@ const Register = () => {
 
                     <div>
                         <label className="mb-1 block text-sm font-medium text-slate-700">
-                            Admin Secret Code Optional
+                            Admin Secret Code (Optional)
                         </label>
 
                         <input
