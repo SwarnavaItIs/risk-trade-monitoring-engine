@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -34,6 +35,8 @@ const Navbar = () => {
                     CSV Upload
                 </Link>
 
+                <ThemeToggle />
+                
                 {user && (
                     <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-200">
                         {user.role}

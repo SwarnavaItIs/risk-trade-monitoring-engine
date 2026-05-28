@@ -1,1 +1,74 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html.dark body {
+    background: #020617;
+    color: #e2e8f0;
+}
+
+html.dark .bg-slate-100 {
+    background-color: #020617;
+}
+
+html.dark .bg-white {
+    background-color: #0f172a;
+}
+
+html.dark .bg-slate-50 {
+    background-color: #111827;
+}
+
+html.dark .bg-slate-950 {
+    background-color: #020617;
+}
+
+html.dark .text-slate-900 {
+    color: #f8fafc;
+}
+
+html.dark .text-slate-700 {
+    color: #cbd5e1;
+}
+
+html.dark .text-slate-600 {
+    color: #94a3b8;
+}
+
+html.dark .text-slate-500 {
+    color: #94a3b8;
+}
+
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-300 {
+    border-color: #334155;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+    background-color: #020617;
+    color: #f8fafc;
+    border-color: #334155;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+    color: #64748b;
+}
+
+html.dark table thead {
+    background-color: #111827;
+}
+
+html.dark tr:hover {
+    background-color: #1e293b;
+}
+
+html.dark .shadow,
+html.dark .shadow-sm,
+html.dark .shadow-lg,
+html.dark .shadow-xl {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
