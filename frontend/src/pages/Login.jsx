@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 
 import { loginUser } from "../api/api";
 
@@ -52,7 +53,7 @@ const Login = () => {
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-slate-100 p-8">
-            <div>
+            <div className="absolute right-6 top-6">
                 <ThemeToggle />
             </div>
 
