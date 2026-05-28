@@ -1,27 +1,66 @@
 import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 
 import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import BounceIndicator from "./components/BounceIndicator";
+
 import Dashboard from './pages/Dashboard';
 import Trades from './pages/Trades';
 import Alerts from './pages/Alerts';
 import AlertDetails from './pages/AlertDetails';
-import BounceIndicator from "./components/BounceIndicator";
 import CsvUpload from "./pages/CsvUpload";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+
+const ProtectedLayout = ({ children }) => {
+    return (
+        <ProtectedRoute>
+            <Navbar />
+            {children}
+            <bounceIndicator />
+        </ProtectedRoute>
+    );
+};
 
 const App = () => {
     return (
         <Router>
-            <Navbar />
             <Routes>
                 <Route path="/" element={<Navigate to="/Dashboard" />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/trades" element={<Trades />} />
-                <Route path="/alerts" element={<Alerts />} />
-                <Route path="/alerts/:id" element={<AlertDetails />} />
-                <Route path="/csv-upload" element={<CsvUpload />} />
-            </Routes>
 
-            <BounceIndicator />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+
+                <Route path="/dashboard" element={
+                    <ProtectedLayout>
+                        <Dashboard />
+                    </ProtectedLayout>
+                } />
+
+                <Route path="/trades" element={
+                    <ProtectedLayout>
+                        <Trades />
+                    </ProtectedLayout>
+                } />
+
+                <Route path="/alerts" element={
+                    <ProtectedLayout>
+                        <Alerts />
+                    </ProtectedLayout>
+                } />
+
+                <Route path="/alerts/:id" element={
+                    <ProtectedLayout>
+                        <AlertDetails />
+                    </ProtectedLayout>
+                } />
+
+                <Route path="/csv-upload" element={
+                    <ProtectedLayout>
+                        <CsvUpload />
+                    </ProtectedLayout>
+                } />
+            </Routes>
         </Router>
     );
 };

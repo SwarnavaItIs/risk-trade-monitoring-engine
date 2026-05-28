@@ -4,6 +4,28 @@ const api = axios.create({
     baseURL: "http://localhost:5000/api"
 });
 
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+});
+
+export const registerUser = (userData) => {
+    return api.post("/auth/register", userData);
+};
+
+export const loginUser = (loginData) => {
+    return api.post("/auth/login", loginData);
+};
+
+export const getMe = () => {
+    return api.get("/auth/me");
+};
+
 //dashboard
 export const getDashboardSummary = () => {
     return api.get("/dashboard/summary");

@@ -6,6 +6,7 @@ const connectDB = require("./config/db");
 dotenv.config();
 connectDB();
 
+const { protect } = require("./middleware/authMiddleware");
 const app = express();
 
 app.use(cors());
@@ -27,9 +28,9 @@ app.get("/", (req, res) => {
 
 app.use("/api/test", testRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/trades", tradeRoutes);
-app.use("/api/alerts", alertRoutes);
-app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/trades", protect, tradeRoutes);
+app.use("/api/alerts", protect, alertRoutes);
+app.use("/api/dashboard", protect,  dashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 
