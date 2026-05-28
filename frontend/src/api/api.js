@@ -7,6 +7,26 @@ const api = axios.create({
 export const getDashboardSummary = () => {
     return api.get("/dashboard/summary");
 };
+export const getAlertsBySeverity = () => {
+    return api.get("/dashboard/alerts-by-severity");
+};
+
+export const getAlertsByType = () => {
+    return api.get("/dashboard/alerts-by-type");
+};
+
+export const getTopRiskyTraders = () => {
+    return api.get("/dashboard/top-risky-traders");
+};
+
+export const getTopTradedStocks = () => {
+    return api.get("/dashboard/top-traded-stocks");
+};
+
+export const getRiskTrend = () => {
+    return api.get("/dashboard/risk-trend");
+};
+
 
 export const getTrades = () => {
     return api.get("/trades");
