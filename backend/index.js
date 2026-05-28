@@ -9,7 +9,24 @@ connectDB();
 const { protect } = require("./middleware/authMiddleware");
 const app = express();
 
-app.use(cors());
+// allows local frontend and deployed frontend to call the backend.
+const allowedOrigins = [
+    "http://localhost:5173",
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
+app.use(
+    cors({
+        origin: function (origin, callback) {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
+        credentials: true
+    })
+);
 app.use(express.json());
 
 const testRoutes = require("./routes/testRoutes");
