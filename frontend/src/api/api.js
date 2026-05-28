@@ -49,5 +49,17 @@ export const updateAlertStatus = (id, updateData) => {
     return api.put(`/alerts/${id}/status`, updateData);
 };
 
+//csv upload
+export const uploadTradesCSV = (file) => {
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    return api.post("/trades/upload", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
 
 export default api;

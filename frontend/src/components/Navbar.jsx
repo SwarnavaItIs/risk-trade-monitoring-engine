@@ -19,6 +19,10 @@ const Navbar = () => {
                 <Link className="transition hover:text-blue-300" to="/alerts">
                     Alerts
                 </Link>
+                
+                <Link className="transition hover:text-blue-300" to="/csv-upload">
+                    CSV Upload
+                </Link>
             </div>
         </nav>
     );

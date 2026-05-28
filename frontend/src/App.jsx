@@ -6,6 +6,7 @@ import Trades from './pages/Trades';
 import Alerts from './pages/Alerts';
 import AlertDetails from './pages/AlertDetails';
 import BounceIndicator from "./components/BounceIndicator";
+import CsvUpload from "./pages/CsvUpload";
 
 const App = () => {
     return (
@@ -17,6 +18,7 @@ const App = () => {
                 <Route path="/trades" element={<Trades />} />
                 <Route path="/alerts" element={<Alerts />} />
                 <Route path="/alerts/:id" element={<AlertDetails />} />
+                <Route path="/csv-upload" element={<CsvUpload />} />
             </Routes>
 
             <BounceIndicator />

@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const Trade = require("../models/Trade");
 const Alert = require("../models/Alert");
 const { risk_config, calculateRiskScore } = require("../services/riskEngine");
+const fs = require("fs");
+const csv = require("csv-parser");
 
 const isValidObjectId = (id) => {
     return mongoose.Types.ObjectId.isValid(id);
@@ -230,6 +232,128 @@ const createTrade = async (req, res) => {
     }
 };
 
+const parseCSVFile = (filePath) => {
+    return new Promise((resolve, reject) => {
+        const rows = [];
+
+        fs.createReadStream(filePath)
+            .pipe(csv())
+            .on("data", (row) => {
+                rows.push(row);
+            })
+            .on("end", () => {
+                resolve(rows);
+            })
+            .on("error", (error) => {
+                reject(error);
+            });
+    });
+};
+
+const uploadTradesCSV = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                message: "CSV file is required"
+            });
+        }
+
+        const rows = await parseCSVFile(req.file.path);
+
+        let tradesSaved = 0;
+        let alertsGenerated = 0;
+
+        const failedRows = [];
+
+        for (let i = 0; i < rows.length; i++) {
+            try {
+                const row = rows[i];
+
+                const validation = validateTradeInput({
+                    traderId: row.traderId,
+                    traderName: row.traderName,
+                    stockSymbol: row.stockSymbol,
+                    tradeType: row.tradeType,
+                    quantity: row.quantity,
+                    price: row.price,
+                    tradeTime: row.tradeTime
+                });
+
+                if (!validation.isValid) {
+                    failedRows.push({
+                        rowNumber: i + 1,
+                        reason: validation.message,
+                        row
+                    });
+
+                    continue;
+                }
+
+                const trade = await Trade.create(validation.data);
+
+                const recentTrades = await getRecentTradesForRiskCheck(trade);
+
+                const riskResult = calculateRiskScore(trade, recentTrades);
+
+                if (riskResult.isRisky) {
+                    await Alert.create({
+                        tradeId: trade._id,
+                        traderId: trade.traderId,
+                        traderName: trade.traderName,
+                        stockSymbol: trade.stockSymbol,
+                        alertType:
+                            riskResult.triggeredRules.length > 1
+                                ? "MULTIPLE_RULES_TRIGGERED"
+                                : riskResult.triggeredRules[0],
+                        severity: riskResult.severity,
+                        riskScore: riskResult.riskScore,
+                        triggeredRules: riskResult.triggeredRules,
+                        reasons: riskResult.reasons,
+                        message: `Trade flagged as ${riskResult.severity} risk due to: ${riskResult.reasons.join("; ")}`,
+                        status: "PENDING"
+                    });
+
+                    alertsGenerated++;
+                }
+
+                tradesSaved++;
+            }
+            catch (error) {
+                failedRows.push({
+                    rowNumber: i + 1,
+                    reason: error.message,
+                    row: rows[i]
+                });
+            }
+        }
+
+        if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+
+        res.status(201).json({
+            message: "CSV processed successfully",
+            data: {
+                totalRows: rows.length,
+                tradesSaved,
+                alertsGenerated,
+                failedRowsCount: failedRows.length,
+                failedRows
+            }
+        });
+    }
+    catch (error) {
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+
+        res.status(500).json({
+            message: "Failed to process CSV",
+            error: error.message
+        });
+    }
+};
+
 const getTradeById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -375,5 +499,6 @@ module.exports = {
     createTrade,
     getTradeById,
     updateTrade,
-    deleteTrade
+    deleteTrade,
+    uploadTradesCSV
 };
