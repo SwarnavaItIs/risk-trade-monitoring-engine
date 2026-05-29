@@ -11,6 +11,7 @@ import AlertDetails from './pages/AlertDetails';
 import CsvUpload from "./pages/CsvUpload";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Profile from "./pages/Profile";
 
 const ProtectedLayout = ({ children }) => {
     return (
@@ -60,6 +61,15 @@ const App = () => {
                         <CsvUpload />
                     </ProtectedLayout>
                 } />
+                
+                <Route
+                    path="/profile"
+                    element={
+                        <ProtectedLayout>
+                            <Profile />
+                        </ProtectedLayout>
+                    }
+                />
             </Routes>
         </Router>
     );

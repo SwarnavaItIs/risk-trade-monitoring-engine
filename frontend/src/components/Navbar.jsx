@@ -43,6 +43,26 @@ const Navbar = () => {
                     </span>
                 )}
 
+                {user && (
+                    <Link
+                        to="/profile"
+                        className="flex items-center justify-center rounded-full transition hover:ring-2 hover:ring-indigo-400"
+                        title="Profile"
+                    >
+                        {user.profilePhoto ? (
+                            <img
+                                src={user.profilePhoto}
+                                alt={user.name}
+                                className="size-9 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="flex size-9 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
+                                {user.name?.charAt(0)?.toUpperCase() || "U"}
+                            </div>
+                        )}
+                    </Link>
+                )}
+                
                 <button
                     type="button"
                     onClick={handleLogout}

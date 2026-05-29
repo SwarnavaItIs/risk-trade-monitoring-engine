@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 
-import { loginUser } from "../api/api";
+import { GoogleLogin } from "@react-oauth/google";
+import { googleLoginUser, loginUser } from "../api/api";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -22,6 +23,31 @@ const Login = () => {
             ...prevData,
             [name]: value
         }));
+    };
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        try {
+            setLoading(true);
+            setError("");
+
+            const response = await googleLoginUser(credentialResponse.credential);
+
+            localStorage.setItem("token", response.data.data.token);
+            localStorage.setItem("user", JSON.stringify(response.data.data.user));
+
+            navigate("/dashboard");
+        }
+        catch (err) {
+            const message =
+                err.response?.data?.message ||
+                "Google login failed";
+
+            setError(message);
+            console.log(err);
+        }
+        finally {
+            setLoading(false);
+        }
     };
 
     const handleSubmit = async (event) => {
@@ -52,8 +78,8 @@ const Login = () => {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-100 p-8">
-            <div className="absolute right-6 top-6">
+        <div className="relative flex min-h-screen items-center justify-center bg-slate-100 p-8">
+            <div className="fixed right-4 top-4 z-50">
                 <ThemeToggle />
             </div>
 
@@ -66,7 +92,24 @@ const Login = () => {
                     Access the Risk Trade Monitoring Engine.
                 </p>
 
-                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                <div className="mt-6">
+                    <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={() => {
+                            setError("Google login failed");
+                        }}
+                    />
+                </div>
+
+                <div className="my-6 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-slate-200"></div>
+                    <span className="text-sm text-slate-500">
+                        or login with email
+                    </span>
+                    <div className="h-px flex-1 bg-slate-200"></div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="mb-1 block text-sm font-medium text-slate-700">
                             Email
@@ -114,7 +157,10 @@ const Login = () => {
 
                 <p className="mt-5 text-sm text-slate-600">
                     New here?{" "}
-                    <Link className="font-semibold text-indigo-600 hover:underline" to="/register">
+                    <Link
+                        className="font-semibold text-indigo-600 hover:underline"
+                        to="/register"
+                    >
                         Create an account
                     </Link>
                 </p>

@@ -26,6 +26,9 @@ export const getMe = () => {
     return api.get("/auth/me");
 };
 
+export const googleLoginUser = (tokenId) => {
+    return api.post("/auth/google", { tokenId });
+};
 //dashboard
 export const getDashboardSummary = () => {
     return api.get("/dashboard/summary");

@@ -1,6 +1,9 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { OAuth2Client } = require("google-auth-library");
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (userId) => {
     return jwt.sign(
@@ -50,6 +53,7 @@ const registerUser = async (req, res) => {
                 user: {
                     id: user._id,
                     name: user.name,
+                    profilePhoto: user.profilePhoto,
                     email: user.email,
                     role: user.role
                 }
@@ -88,6 +92,7 @@ const loginUser = async (req, res) => {
                 user: {
                     id: user._id,
                     name: user.name,
+                    profilePhoto: user.profilePhoto,
                     email: user.email,
                     role: user.role
                 }
@@ -100,6 +105,72 @@ const loginUser = async (req, res) => {
     }
 };
 
+const gooleLoginUser = async (req, res) => {
+    try {
+        const { tokenId } = req.body;
+
+        if (!tokenId) {
+            return res.status(400).json({ message: "Google credentials is required" });
+        }
+        const ticket = await googleClient.verifyIdToken({
+            idToken: tokenId,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+        if (!payload || !payload.email) {
+            return res.status(400).json({ message: "Invalid Google account" });
+        }
+
+        if(payload.email_verified !== true) {
+            return res.status(400).json({ message: "Google email not verified" });
+        }
+
+        let user = await User.findOne({ email: payload.email });
+
+        if (!user) {
+            user = await User.create({
+                name: payload.name,
+                email: payload.email,
+                profilePhoto: payload.picture || "",
+                googleId: payload.sub,
+                authProvider: "GOOGLE",
+                role: "ANALYST"
+            });
+        }
+        else{
+            if(!user.googleId){
+                user.googleId = payload.sub;
+                user.authProvider = user.password ? "BOTH" : "GOOGLE";
+            }
+            
+            if(!user.profilePhoto && payload.picture){
+                user.profilePhoto = payload.picture;
+            }
+
+            await user.save();
+        }
+
+        const token = generateToken(user._id);
+        res.status(200).json({
+            message: "Login successful",
+            data: {
+                token,
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role
+                }
+            }
+        });
+    }
+    catch (error) {
+        console.error("Google Authentication Failed!", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 const getMe = async (req, res) => {
     try {
         res.status(200).json({
@@ -108,6 +179,7 @@ const getMe = async (req, res) => {
                 user: {
                     id: req.user._id,
                     name: req.user.name,
+                    profilePhoto: user.profilePhoto,
                     email: req.user.email,
                     role: req.user.role
                 }
@@ -123,5 +195,6 @@ const getMe = async (req, res) => {
 module.exports = {
     registerUser,
     loginUser,
+    gooleLoginUser,
     getMe
 };
