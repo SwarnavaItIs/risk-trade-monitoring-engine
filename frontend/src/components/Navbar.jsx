@@ -62,6 +62,7 @@ const Navbar = () => {
                         )}
                     </Link>
                 )}
+
                 
                 <button
                     type="button"
