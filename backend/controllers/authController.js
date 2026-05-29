@@ -18,30 +18,42 @@ const registerUser = async (req, res) => {
         const { name, email, password, adminSecret } = req.body;
 
         if (!name || !email || !password) {
-            return res.status(400).json({ message: "Please provide name, email and password" });
+            return res.status(400).json({
+                message: "Name, email, and password are required"
+            });
         }
 
-        const existingUser = await User.findOne({ email });
+        const normalizedEmail = email.toLowerCase().trim();
+
+        const existingUser = await User.findOne({
+            email: normalizedEmail
+        });
+
         if (existingUser) {
-            return res.status(400).json({ message: "Email already in use" });
+            return res.status(400).json({
+                message: "An account with this email already exists. Please login instead."
+            });
         }
 
-        const role = "ANALYST";
+        let role = "ANALYST";
+
         if (adminSecret) {
-            if (adminSecret === process.env.ADMIN_REGISTRATION_SECRET) {
-                role = "ADMIN";
-            } else {
-                return res.status(400).json({ message: "Invalid admin registration secret" });
+            if (adminSecret !== process.env.ADMIN_REGISTRATION_SECRET) {
+                return res.status(403).json({
+                    message: "Invalid admin registration secret"
+                });
             }
+
+            role = "ADMIN";
         }
-        
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await User.create({
-            name,
-            email,
+            name: name.trim(),
+            email: normalizedEmail,
             password: hashedPassword,
-            role: role || "ANALYST"
+            role
         });
 
         const token = generateToken(user._id);
@@ -53,15 +65,24 @@ const registerUser = async (req, res) => {
                 user: {
                     id: user._id,
                     name: user.name,
-                    profilePhoto: user.profilePhoto,
                     email: user.email,
-                    role: user.role
+                    role: user.role,
+                    profilePhoto: user.profilePhoto || ""
                 }
             }
         });
-    } catch (error) {
-        console.error("Error registering user:", error);
-        res.status(500).json({ message: "Server error" });
+    }
+    catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({
+                message: "An account with this email already exists. Please login instead."
+            });
+        }
+
+        res.status(500).json({
+            message: "Failed to register user",
+            error: error.message
+        });
     }
 };
 
