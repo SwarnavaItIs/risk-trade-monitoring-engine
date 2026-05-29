@@ -18,7 +18,7 @@ const ProtectedLayout = ({ children }) => {
         <ProtectedRoute>
             <Navbar />
             {children}
-            <bounceIndicator />
+            <BounceIndicator />
         </ProtectedRoute>
     );
 };
@@ -61,7 +61,7 @@ const App = () => {
                         <CsvUpload />
                     </ProtectedLayout>
                 } />
-                
+
                 <Route
                     path="/profile"
                     element={
