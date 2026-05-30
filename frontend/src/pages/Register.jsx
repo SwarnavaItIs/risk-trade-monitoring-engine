@@ -94,20 +94,9 @@ const Register = () => {
                     Create an account to access the monitoring dashboard.
                 </p>
 
-                <div className="mt-6">
-                    <GoogleLogin
-                        onSuccess={handleGoogleSuccess}
-                        onError={() => {
-                            setError("Google registration failed");
-                        }}
-                    />
-                </div>
-
-                <div className="my-6 flex items-center gap-3">
+                <div className="my-6 flex items-center">
                     <div className="h-px flex-1 bg-slate-200"></div>
-                    <span className="text-sm text-slate-500">
-                        or register with email
-                    </span>
+                    
                     <div className="h-px flex-1 bg-slate-200"></div>
                 </div>
 
@@ -189,6 +178,25 @@ const Register = () => {
                     >
                         {loading ? "Creating account..." : "Register"}
                     </button>
+
+                    <div className="my-6 flex items-center gap-3">
+                        <div className="h-px flex-1 bg-slate-200"></div>
+                        <span className="text-sm text-slate-500">
+                            or you can sign up with
+                        </span>
+                        <div className="h-px flex-1 bg-slate-200"></div>
+                    </div>
+
+                    <div className="flex justify-center">
+                        <GoogleLogin
+                            type="icon"
+                            shape="circle"
+                            onSuccess={handleGoogleSuccess}
+                            onError={() => {
+                                setError("Google registration failed");
+                            }}
+                        />
+                    </div>
                 </form>
 
                 <p className="mt-5 text-sm text-slate-600">

@@ -92,24 +92,7 @@ const Login = () => {
                     Access the Risk Trade Monitoring Engine.
                 </p>
 
-                <div className="mt-6">
-                    <GoogleLogin
-                        onSuccess={handleGoogleSuccess}
-                        onError={() => {
-                            setError("Google login failed");
-                        }}
-                    />
-                </div>
-
-                <div className="my-6 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-slate-200"></div>
-                    <span className="text-sm text-slate-500">
-                        or login with email
-                    </span>
-                    <div className="h-px flex-1 bg-slate-200"></div>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                     <div>
                         <label className="mb-1 block text-sm font-medium text-slate-700">
                             Email
@@ -153,17 +136,50 @@ const Login = () => {
                     >
                         {loading ? "Logging in..." : "Login"}
                     </button>
-                </form>
 
-                <p className="mt-5 text-sm text-slate-600">
-                    New here?{" "}
-                    <Link
-                        className="font-semibold text-indigo-600 hover:underline"
-                        to="/register"
-                    >
-                        Create an account
-                    </Link>
-                </p>
+                    <div className="mt-4 flex justify-between text-sm">
+                        <Link
+                            className="font-semibold text-slate-600 hover:text-indigo-600"
+                            to="/forgot-password"
+                        >
+                            Forgot Password?
+                        </Link>
+
+                        <Link
+                            className="font-semibold text-indigo-600 hover:underline"
+                            to="/register"
+                        >
+                            Sign Up
+                        </Link>
+                    </div>
+
+                    <div className="my-6 flex items-center gap-3">
+                        <div className="h-px flex-1 bg-slate-200"></div>
+
+                        <span className="text-sm text-slate-500">
+                            or you can sign in with
+                        </span>
+
+                        <div className="h-px flex-1 bg-slate-200"></div>
+                    </div>
+
+                    <div className="flex justify-center">
+                        <div className="overflow-hidden rounded-full">
+                            <GoogleLogin
+                                type="icon"
+                                shape="circle"
+                                theme="outline"
+                                size="large"
+                                logo_alignment="center"
+                                width="48"
+                                onSuccess={handleGoogleSuccess}
+                                onError={() => {
+                                    setError("Google login failed");
+                                }}
+                            />
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     );

@@ -87,4 +87,12 @@ export const uploadTradesCSV = (file) => {
     });
 };
 
+//forgot password
+export const forgotPassword = (email) => {
+    return api.post("/auth/forgot-password", { email });
+}
+//reset password
+export const resetPassword = (token, newPassword) => {
+    return api.post(`/auth/reset-password/${token}`, { password: newPassword });
+}
 export default api;

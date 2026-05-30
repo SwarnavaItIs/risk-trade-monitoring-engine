@@ -12,6 +12,8 @@ import CsvUpload from "./pages/CsvUpload";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const ProtectedLayout = ({ children }) => {
     return (
@@ -31,7 +33,9 @@ const App = () => {
 
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password/:token" element={<ResetPassword />} />
+                
                 <Route path="/dashboard" element={
                     <ProtectedLayout>
                         <Dashboard />

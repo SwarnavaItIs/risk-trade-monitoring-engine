@@ -4,6 +4,106 @@ const User = require("../models/User");
 const { OAuth2Client } = require("google-auth-library");
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const crypto = require("crypto");
+
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                message: "Email is required"
+            });
+        }
+
+        const normalizedEmail = email.toLowerCase().trim();
+
+        const user = await User.findOne({ email: normalizedEmail });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "No account found with this email"
+            });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString("hex");
+
+        const hashedToken = crypto
+            .createHash("sha256")
+            .update(resetToken)
+            .digest("hex");
+
+        user.passwordResetToken = hashedToken;
+        user.passwordResetExpires = Date.now() + 15 * 60 * 1000;
+
+        await user.save();
+
+        res.status(200).json({
+            message: "Password reset token generated successfully",
+            data: {
+                resetToken,
+                expiresIn: "15 minutes"
+            }
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Failed to generate password reset token",
+            error: error.message
+        });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        if (!password) {
+            return res.status(400).json({
+                message: "New password is required"
+            });
+        }
+
+        const hashedToken = crypto
+            .createHash("sha256")
+            .update(token)
+            .digest("hex");
+
+        const user = await User.findOne({
+            passwordResetToken: hashedToken,
+            passwordResetExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                message: "Invalid or expired reset token"
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        user.password = hashedPassword;
+        user.passwordResetToken = "";
+        user.passwordResetExpires = undefined;
+
+        if (user.authProvider === "GOOGLE") {
+            user.authProvider = "BOTH";
+        }
+
+        await user.save();
+
+        res.status(200).json({
+            message: "Password reset successfully"
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Failed to reset password",
+            error: error.message
+        });
+    }
+};
 
 const generateToken = (userId) => {
     return jwt.sign(
@@ -217,5 +317,7 @@ module.exports = {
     registerUser,
     loginUser,
     gooleLoginUser,
-    getMe
+    getMe,
+    forgotPassword,
+    resetPassword
 };
