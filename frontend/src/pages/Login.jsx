@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 
-import { GoogleLogin } from "@react-oauth/google";
+import GoogleIconButton from "../components/GoogleIconButton"; 
 import { googleLoginUser, loginUser } from "../api/api";
 
 const Login = () => {
@@ -164,20 +164,12 @@ const Login = () => {
                     </div>
 
                     <div className="flex justify-center">
-                        <div className="overflow-hidden rounded-full">
-                            <GoogleLogin
-                                type="icon"
-                                shape="circle"
-                                theme="outline"
-                                size="large"
-                                logo_alignment="center"
-                                width="48"
-                                onSuccess={handleGoogleSuccess}
-                                onError={() => {
-                                    setError("Google login failed");
-                                }}
-                            />
-                        </div>
+                        <GoogleIconButton
+                            onSuccess={handleGoogleSuccess}
+                            onError={() => {
+                                setError("Google login failed");
+                            }}
+                        />
                     </div>
                 </form>
             </div>

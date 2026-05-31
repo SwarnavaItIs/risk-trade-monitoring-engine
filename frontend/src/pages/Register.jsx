@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 
-import { GoogleLogin } from "@react-oauth/google";
+import GoogleIconButton from "../components/GoogleIconButton"; 
 import { googleLoginUser, registerUser } from "../api/api";
 
 const Register = () => {
@@ -188,9 +188,7 @@ const Register = () => {
                     </div>
 
                     <div className="flex justify-center">
-                        <GoogleLogin
-                            type="icon"
-                            shape="circle"
+                        <GoogleIconButton
                             onSuccess={handleGoogleSuccess}
                             onError={() => {
                                 setError("Google registration failed");
