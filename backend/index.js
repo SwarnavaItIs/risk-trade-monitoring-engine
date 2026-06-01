@@ -9,7 +9,6 @@ connectDB();
 const { protect } = require("./middleware/authMiddleware");
 const app = express();
 
-// allows local frontend and deployed frontend to call the backend.
 const allowedOrigins = [
     "http://localhost:5173",
     process.env.FRONTEND_URL
@@ -34,7 +33,7 @@ const authRoutes = require("./routes/authRoutes");
 const alertRoutes = require("./routes/alertRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const tradeRoutes = require("./routes/tradeRoutes");
-
+const riskRuleRoutes = require("./routes/riskRuleRoutes");
 
 
 
@@ -48,6 +47,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/trades", protect, tradeRoutes);
 app.use("/api/alerts", protect, alertRoutes);
 app.use("/api/dashboard", protect,  dashboardRoutes);
+app.use("/api/risk-rules", protect, riskRuleRoutes);
 
 const PORT = process.env.PORT || 5000;
 
