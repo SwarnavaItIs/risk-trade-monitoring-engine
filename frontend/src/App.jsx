@@ -14,6 +14,7 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import RiskRules from "./pages/RiskRules";
 
 const ProtectedLayout = ({ children }) => {
     return (
@@ -66,6 +67,15 @@ const App = () => {
                     </ProtectedLayout>
                 } />
 
+                <Route
+                    path="/risk-rules"
+                    element={
+                        <ProtectedLayout>
+                            <RiskRules />
+                        </ProtectedLayout>
+                    }
+                />
+                
                 <Route
                     path="/profile"
                     element={

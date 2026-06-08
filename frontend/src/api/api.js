@@ -87,6 +87,17 @@ export const uploadTradesCSV = (file) => {
     });
 };
 
+//get and update riskrules
+export const getRiskRules = (filters = {}) => {
+    return api.get("/risk-rules", {
+        params: filters
+    });
+};
+
+export const updateRiskRule = (id, ruleData) => {
+    return api.put(`/risk-rules/${id}`, ruleData);
+};
+
 //forgot password
 export const forgotPassword = (email) => {
     return api.post("/auth/forgot-password", { email });

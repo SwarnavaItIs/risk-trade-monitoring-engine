@@ -63,6 +63,12 @@ const Navbar = () => {
                     <Link className="transition hover:text-blue-300" to="/csv-upload">
                         CSV Upload
                     </Link>
+                    
+                    {user?.role === "ADMIN" && (
+                        <Link className="transition hover:text-blue-300" to="/risk-rules">
+                            Risk Rules
+                        </Link>
+                    )}
 
                     <ThemeToggle />
 
