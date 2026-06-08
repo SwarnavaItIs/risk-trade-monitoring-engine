@@ -3,6 +3,9 @@ const Trade = require("../models/Trade");
 const Alert = require("../models/Alert");
 const { risk_config, calculateRiskScore } = require("../services/riskEngine");
 const { evaluatePreTradeRules } = require("../services/preTradeRiskEngine");
+const { evaluateBehavioralRules } = require("../services/behavioralRiskEngine");
+
+
 const fs = require("fs");
 const csv = require("csv-parser");
 
@@ -122,20 +125,18 @@ const buildTradeQuery = (queryParams) => {
 };
 
 const getRecentTradesForRiskCheck = async (trade) => {
-    const tradeTime = new Date(trade.tradeTime);
+    const tradeTime = trade.tradeTime ? new Date(trade.tradeTime) : new Date();
 
-    const windowStartTime = new Date(
-        tradeTime.getTime() - risk_config.rapidTradeWindowMinutes * 60 * 1000
-    );
+    const windowStart = new Date(tradeTime.getTime() - 30 * 60 * 1000);
 
     const recentTrades = await Trade.find({
-        _id: { $ne: trade._id },
         traderId: trade.traderId,
-        stockSymbol: trade.stockSymbol,
         tradeTime: {
-            $gte: windowStartTime,
+            $gte: windowStart,
             $lte: tradeTime
         }
+    }).sort({
+        tradeTime: -1
     });
 
     return recentTrades;
@@ -203,7 +204,7 @@ const createTrade = async (req, res) => {
 
         const recentTrades = await getRecentTradesForRiskCheck(trade);
 
-        const riskResult = calculateRiskScore(trade, recentTrades);
+        const riskResult = await evaluateBehavioralRules(trade, recentTrades);
 
         let alert = null;
 
@@ -274,7 +275,7 @@ const uploadTradesCSV = async (req, res) => {
         let tradesSaved = 0;
         let alertsGenerated = 0;
         let blockedRows = 0;
-        
+
         const failedRows = [];
 
         for (let i = 0; i < rows.length; i++) {
@@ -319,7 +320,7 @@ const uploadTradesCSV = async (req, res) => {
 
                 const recentTrades = await getRecentTradesForRiskCheck(trade);
 
-                const riskResult = calculateRiskScore(trade, recentTrades);
+                const riskResult = await evaluateBehavioralRules(trade, recentTrades);
 
                 if (riskResult.isRisky) {
                     await Alert.create({
