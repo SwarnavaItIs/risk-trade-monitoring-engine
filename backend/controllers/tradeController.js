@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Trade = require("../models/Trade");
 const Alert = require("../models/Alert");
 const { risk_config, calculateRiskScore } = require("../services/riskEngine");
+const { evaluatePreTradeRules } = require("../services/preTradeRiskEngine");
 const fs = require("fs");
 const csv = require("csv-parser");
 
@@ -188,6 +189,16 @@ const createTrade = async (req, res) => {
             });
         }
 
+        const preTradeResult = await evaluatePreTradeRules(validation.data);
+
+        if (preTradeResult.blocked) {
+            return res.status(400).json({
+                message: "Trade blocked by pre-trade risk controls",
+                blocked: true,
+                failedRules: preTradeResult.failedRules
+            });
+        }
+
         const trade = await Trade.create(validation.data);
 
         const recentTrades = await getRecentTradesForRiskCheck(trade);
@@ -262,7 +273,8 @@ const uploadTradesCSV = async (req, res) => {
 
         let tradesSaved = 0;
         let alertsGenerated = 0;
-
+        let blockedRows = 0;
+        
         const failedRows = [];
 
         for (let i = 0; i < rows.length; i++) {
@@ -283,6 +295,20 @@ const uploadTradesCSV = async (req, res) => {
                     failedRows.push({
                         rowNumber: i + 1,
                         reason: validation.message,
+                        row
+                    });
+
+                    continue;
+                }
+
+                const preTradeResult = await evaluatePreTradeRules(validation.data);
+
+                if (preTradeResult.blocked) {
+                    blockedRows++;
+                    failedRows.push({
+                        rowNumber: i + 1,
+                        reason: "Blocked by pre-trade risk controls",
+                        failedRules: preTradeResult.failedRules,
                         row
                     });
 

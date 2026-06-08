@@ -1,4 +1,4 @@
-const RiskRule = require("../models/RiskRule");
+const RiskRule = require("../models/RiskRules");
 
 const getEnabledRiskRules = async () => {
     return RiskRule.find({ enabled: true }).sort({
