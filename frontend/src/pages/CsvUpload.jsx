@@ -250,7 +250,23 @@ const CsvUpload = () => {
                                                     </td>
 
                                                     <td className="px-4 py-3 text-red-600">
-                                                        {row.reason}
+                                                        <p className="font-semibold">
+                                                            {row.reason}
+                                                        </p>
+
+                                                        {row.failedRules?.length > 0 && (
+                                                            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                                                                {row.failedRules.map((rule) => (
+                                                                    <li key={rule.ruleCode}>
+                                                                        <span className="font-semibold">
+                                                                            {rule.ruleCode}
+                                                                        </span>
+                                                                        {" — "}
+                                                                        {rule.reason}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}

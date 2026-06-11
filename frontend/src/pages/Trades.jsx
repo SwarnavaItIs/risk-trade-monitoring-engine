@@ -19,6 +19,8 @@ const Trades = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [submitResult, setSubmitResult] = useState(null);
 
+    const [blockedResult, setBlockedResult] = useState(null);
+
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
@@ -62,6 +64,7 @@ const Trades = () => {
             setSubmitting(true);
             setFormError("");
             setSubmitResult(null);
+            setBlockedResult(null);
 
             const tradePayload = {
                 traderId: formData.traderId,
@@ -84,12 +87,20 @@ const Trades = () => {
             await fetchTrades();
         }
         catch (err) {
-            const message =
-                err.response?.data?.message ||
-                err.response?.data?.error ||
-                "Failed to create trade";
+            const responseData = err.response?.data;
 
-            setFormError(message);
+            if (responseData?.blocked) {
+                setBlockedResult(responseData);
+                setFormError("");
+            } else {
+                const message =
+                    responseData?.message ||
+                    responseData?.error ||
+                    "Failed to create trade";
+
+                setFormError(message);
+            }
+
             console.log(err);
         }
         finally {
@@ -98,6 +109,18 @@ const Trades = () => {
     };
 
     const getRiskBadgeClass = (severity) => {
+        if (severity === "HIGH") {
+            return "bg-red-100 text-red-700";
+        }
+
+        if (severity === "MEDIUM") {
+            return "bg-amber-100 text-amber-700";
+        }
+
+        return "bg-green-100 text-green-700";
+    };
+
+    const getFailedRuleSeverityClass = (severity) => {
         if (severity === "HIGH") {
             return "bg-red-100 text-red-700";
         }
@@ -248,6 +271,60 @@ const Trades = () => {
                         {formError}
                     </p>
                 )}
+
+                {blockedResult && (
+                    <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-bold text-red-700">
+                                    Trade Blocked by Pre-Trade Controls
+                                </h2>
+
+                                <p className="mt-2 text-sm text-red-600">
+                                    This trade was rejected before saving because it violated one or more hard-block risk rules.
+                                </p>
+                            </div>
+
+                            <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white">
+                                BLOCKED
+                            </span>
+                        </div>
+
+                        <div className="mt-5 space-y-4">
+                            {blockedResult.failedRules?.map((rule) => (
+                                <div
+                                    key={rule.ruleCode}
+                                    className="rounded-xl bg-white p-4 shadow-sm"
+                                >
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 className="font-bold text-slate-900">
+                                            {rule.ruleName}
+                                        </h3>
+
+                                        <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-bold text-white">
+                                            {rule.ruleCode}
+                                        </span>
+
+                                        <span
+                                            className={`rounded-full px-3 py-1 text-xs font-bold ${getFailedRuleSeverityClass(rule.severity)}`}
+                                        >
+                                            {rule.severity}
+                                        </span>
+
+                                        <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
+                                            {rule.action}
+                                        </span>
+                                    </div>
+
+                                    <p className="mt-3 text-sm text-slate-700">
+                                        {rule.reason}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
             </div>
 
             {submitting && (
@@ -259,7 +336,7 @@ const Trades = () => {
             {submitResult && (
                 <div className="mb-6 rounded-2xl bg-white p-6 shadow">
                     <h2 className="mb-4 text-xl font-bold text-slate-900">
-                        Risk Evaluation Result
+                        Trade Accepted — Behavioral Risk Evaluation
                     </h2>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
