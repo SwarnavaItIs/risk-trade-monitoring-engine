@@ -20,7 +20,11 @@ const ProtectedLayout = ({ children }) => {
     return (
         <ProtectedRoute>
             <Navbar />
-            {children}
+
+            <main className="pt-24">
+                {children}
+            </main>
+
             <BounceIndicator />
         </ProtectedRoute>
     );

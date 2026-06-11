@@ -35,6 +35,60 @@ const severityColors = {
     HIGH: "#ef4444"
 };
 
+const FixedChartTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || payload.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur">
+            <p className="mb-2 font-bold text-slate-900">
+                {label}
+            </p>
+
+            <div className="space-y-1">
+                {payload.map((item) => (
+                    <p key={item.dataKey} className="text-sm text-slate-700">
+                        <span className="font-semibold">
+                            {item.name || item.dataKey}
+                        </span>
+                        {" : "}
+                        <span className="font-bold">
+                            {item.value}
+                        </span>
+                    </p>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const GlassTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || payload.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="rounded-xl border border-white/30 bg-white/40 p-4 shadow-xl backdrop-blur-xl">
+            <p className="mb-2 font-bold text-slate-900">
+                {label}
+            </p>
+
+            {payload.map((item) => (
+                <p key={item.dataKey} className="text-sm text-slate-700">
+                    <span className="font-semibold">
+                        {item.dataKey}
+                    </span>
+                    {" : "}
+                    <span className="font-bold">
+                        {item.value}
+                    </span>
+                </p>
+            ))}
+        </div>
+    );
+};
+
 const Dashboard = () => {
     const [summary, setSummary] = useState(null);
     const [severityData, setSeverityData] = useState([]);
@@ -49,6 +103,8 @@ const Dashboard = () => {
     const [ruleTriggerSummary, setRuleTriggerSummary] = useState([]);
     const [blockedTradeSummary, setBlockedTradeSummary] = useState(null);
     const [recentRiskEvents, setRecentRiskEvents] = useState([]);
+
+    const [trendTooltipPosition, setTrendTooltipPosition] = useState(null);
 
     const fetchDashboardData = async () => {
         try {
@@ -262,22 +318,50 @@ const Dashboard = () => {
 
                 <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={riskTrend}>
+                        <LineChart
+                            data={riskTrend}
+                            onClick={(data) => {
+                                if (!data || !data.activeCoordinate) {
+                                    return;
+                                }
+
+                                setTrendTooltipPosition({
+                                    x: Math.max(data.activeCoordinate.x - 90, 10),
+                                    y: 10
+                                });
+                            }}
+                        >
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" />
                             <YAxis />
-                            <Tooltip />
+
+                            <Tooltip
+                                trigger="click"
+                                cursor={false}
+                                content={<GlassTooltip />}
+                                position={trendTooltipPosition || { x: 20, y: 10 }}
+                                wrapperStyle={{
+                                    outline: "none",
+                                    transition: "opacity 180ms ease"
+                                }}
+                            />
+
                             <Line
                                 type="monotone"
                                 dataKey="totalAlerts"
                                 stroke="#6366f1"
                                 strokeWidth={3}
+                                dot={{ r: 4 }}
+                                activeDot={{ r: 7 }}
                             />
+
                             <Line
                                 type="monotone"
                                 dataKey="highRiskAlerts"
                                 stroke="#ef4444"
                                 strokeWidth={3}
+                                dot={{ r: 4 }}
+                                activeDot={{ r: 7 }}
                             />
                         </LineChart>
                     </ResponsiveContainer>
@@ -453,7 +537,7 @@ const Dashboard = () => {
                     </table>
                 </div>
             </div>
-            
+
             <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
                 <div className="overflow-hidden rounded-2xl bg-white shadow">
                     <div className="border-b border-slate-100 p-6">

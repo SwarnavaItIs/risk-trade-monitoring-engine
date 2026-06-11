@@ -42,7 +42,17 @@ const Navbar = () => {
                 </div>
             )}
 
-            <nav className="flex h-16 items-center justify-between bg-slate-950 px-8 text-white shadow">
+            <div
+                className="pointer-events-none fixed left-0 top-0 z-40 h-28 w-full backdrop-blur-xl"
+                style={{
+                    WebkitMaskImage:
+                        "linear-gradient(to bottom, black 0%, rgba(0,0,0,0.75) 45%, transparent 100%)",
+                    maskImage:
+                        "linear-gradient(to bottom, black 0%, rgba(0,0,0,0.75) 45%, transparent 100%)"
+                }}
+            ></div>
+            
+            <nav className="fixed left-4 right-4 top-4 z-50 flex h-16 items-center justify-between rounded-2xl bg-slate-950/95 px-8 text-white shadow-xl backdrop-blur">
                 <div className="text-lg font-bold tracking-wide">
                     Risk Trade Monitoring Engine
                 </div>
