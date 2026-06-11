@@ -106,4 +106,17 @@ export const forgotPassword = (email) => {
 export const resetPassword = (token, newPassword) => {
     return api.post(`/auth/reset-password/${token}`, { password: newPassword });
 }
+
+// some get apis
+export const getRuleTriggerSummary = () => {
+    return api.get("/dashboard/rule-trigger-summary");
+};
+
+export const getBlockedTradeSummary = () => {
+    return api.get("/dashboard/blocked-trade-summary");
+};
+
+export const getRecentRiskEvents = () => {
+    return api.get("/dashboard/recent-risk-events");
+};
 export default api;

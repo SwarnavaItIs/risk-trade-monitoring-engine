@@ -34,12 +34,13 @@ const addFailedRule = (failedRules, rule, reason) => {
     failedRules.push({
         ruleCode: rule.ruleCode,
         ruleName: rule.ruleName,
+        tier: rule.tier,
         severity: rule.severity,
+        riskWeight: rule.riskWeight,
         action: rule.action,
         reason
     });
 };
-
 const evaluateSingleOrderValueCap = (tradeData, rule, failedRules) => {
     const tradeValue = getTradeValue(tradeData);
     const maxOrderValue = rule.parameters?.maxOrderValue || 1000000;

@@ -1,5 +1,6 @@
 const Trade = require("../models/Trade");
 const Alert = require("../models/Alert");
+const RiskEvent = require("../models/RiskEvent");
 
 const getDashboardSummary = async (req, res) => {
     try {
@@ -341,11 +342,133 @@ const getRiskTrend = async (req, res) => {
     }
 };
 
+const getRuleTriggerSummary = async (req, res) => {
+    try {
+        const summary = await RiskEvent.aggregate([
+            {
+                $group: {
+                    _id: {
+                        ruleCode: "$ruleCode",
+                        ruleName: "$ruleName",
+                        eventType: "$eventType",
+                        tier: "$tier",
+                        action: "$action",
+                        severity: "$severity"
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    ruleCode: "$_id.ruleCode",
+                    ruleName: "$_id.ruleName",
+                    eventType: "$_id.eventType",
+                    tier: "$_id.tier",
+                    action: "$_id.action",
+                    severity: "$_id.severity",
+                    count: 1
+                }
+            },
+            {
+                $sort: {
+                    count: -1
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            message: "Rule trigger summary fetched successfully",
+            data: summary
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Failed to fetch rule trigger summary",
+            error: error.message
+        });
+    }
+};
+
+const getBlockedTradeSummary = async (req, res) => {
+    try {
+        const totalBlockedTrades = await RiskEvent.countDocuments({
+            eventType: "BLOCKED_TRADE"
+        });
+
+        const blockedByRule = await RiskEvent.aggregate([
+            {
+                $match: {
+                    eventType: "BLOCKED_TRADE"
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        ruleCode: "$ruleCode",
+                        ruleName: "$ruleName"
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    ruleCode: "$_id.ruleCode",
+                    ruleName: "$_id.ruleName",
+                    count: 1
+                }
+            },
+            {
+                $sort: {
+                    count: -1
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            message: "Blocked trade summary fetched successfully",
+            data: {
+                totalBlockedTrades,
+                blockedByRule
+            }
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Failed to fetch blocked trade summary",
+            error: error.message
+        });
+    }
+};
+
+const getRecentRiskEvents = async (req, res) => {
+    try {
+        const events = await RiskEvent.find()
+            .sort({ createdAt: -1 })
+            .limit(20);
+
+        res.status(200).json({
+            message: "Recent risk events fetched successfully",
+            data: events
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Failed to fetch recent risk events",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getDashboardSummary,
     getAlertsBySeverity,
     getAlertsByType,
     getTopRiskyTraders,
     getTopTradedStocks,
-    getRiskTrend
+    getRiskTrend,
+    getRuleTriggerSummary,
+    getBlockedTradeSummary,
+    getRecentRiskEvents
 };

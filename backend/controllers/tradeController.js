@@ -4,7 +4,10 @@ const Alert = require("../models/Alert");
 const { risk_config, calculateRiskScore } = require("../services/riskEngine");
 const { evaluatePreTradeRules } = require("../services/preTradeRiskEngine");
 const { evaluateBehavioralRules } = require("../services/behavioralRiskEngine");
-
+const {
+    logBlockedTradeEvents,
+    logAlertRuleEvents
+} = require("../services/riskEventLogger");
 
 const fs = require("fs");
 const csv = require("csv-parser");
@@ -193,6 +196,11 @@ const createTrade = async (req, res) => {
         const preTradeResult = await evaluatePreTradeRules(validation.data);
 
         if (preTradeResult.blocked) {
+            await logBlockedTradeEvents(
+                validation.data,
+                preTradeResult.failedRules
+            );
+
             return res.status(400).json({
                 message: "Trade blocked by pre-trade risk controls",
                 blocked: true,
@@ -224,6 +232,12 @@ const createTrade = async (req, res) => {
                 reasons: riskResult.reasons,
                 message: `Trade flagged as ${riskResult.severity} risk due to: ${riskResult.reasons.join("; ")}`,
                 status: "PENDING"
+            });
+
+            await logAlertRuleEvents({
+                trade,
+                alert,
+                riskResult
             });
         }
 
@@ -306,6 +320,12 @@ const uploadTradesCSV = async (req, res) => {
 
                 if (preTradeResult.blocked) {
                     blockedRows++;
+
+                    await logBlockedTradeEvents(
+                        validation.data,
+                        preTradeResult.failedRules
+                    );
+
                     failedRows.push({
                         rowNumber: i + 1,
                         reason: "Blocked by pre-trade risk controls",
@@ -323,7 +343,7 @@ const uploadTradesCSV = async (req, res) => {
                 const riskResult = await evaluateBehavioralRules(trade, recentTrades);
 
                 if (riskResult.isRisky) {
-                    await Alert.create({
+                    const alert = await Alert.create({
                         tradeId: trade._id,
                         traderId: trade.traderId,
                         traderName: trade.traderName,
@@ -338,6 +358,12 @@ const uploadTradesCSV = async (req, res) => {
                         reasons: riskResult.reasons,
                         message: `Trade flagged as ${riskResult.severity} risk due to: ${riskResult.reasons.join("; ")}`,
                         status: "PENDING"
+                    });
+
+                    await logAlertRuleEvents({
+                        trade,
+                        alert,
+                        riskResult
                     });
 
                     alertsGenerated++;
