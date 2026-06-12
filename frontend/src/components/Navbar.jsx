@@ -51,7 +51,7 @@ const Navbar = () => {
                         "linear-gradient(to bottom, black 0%, rgba(0,0,0,0.75) 45%, transparent 100%)"
                 }}
             ></div>
-            
+
             <nav className="fixed left-4 right-4 top-4 z-50 flex h-16 items-center justify-between rounded-2xl bg-slate-950/95 px-8 text-white shadow-xl backdrop-blur">
                 <div className="text-lg font-bold tracking-wide">
                     Risk Trade Monitoring Engine
@@ -73,11 +73,17 @@ const Navbar = () => {
                     <Link className="transition hover:text-blue-300" to="/csv-upload">
                         CSV Upload
                     </Link>
-                    
+
                     {user?.role === "ADMIN" && (
-                        <Link className="transition hover:text-blue-300" to="/risk-rules">
-                            Risk Rules
-                        </Link>
+                        <>
+                            <Link className="transition hover:text-blue-300" to="/risk-rules">
+                                Risk Rules
+                            </Link>
+
+                            <Link className="transition hover:text-blue-300" to="/admin/members">
+                                Members
+                            </Link>
+                        </>
                     )}
 
                     <ThemeToggle />

@@ -37,6 +37,11 @@ const userSchema = new mongoose.Schema(
             enum: ["ADMIN", "ANALYST"],
             default: "ANALYST"
         },
+        status: {
+            type: String,
+            enum: ["ACTIVE", "SUSPENDED"],
+            default: "ACTIVE"
+        },
         profilePhoto: {
             type: String,
             default: ""

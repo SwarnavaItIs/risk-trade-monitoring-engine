@@ -34,7 +34,7 @@ const alertRoutes = require("./routes/alertRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const tradeRoutes = require("./routes/tradeRoutes");
 const riskRuleRoutes = require("./routes/riskRuleRoutes");
-
+const adminRoutes = require("./routes/adminRoutes");
 
 
 
@@ -48,7 +48,7 @@ app.use("/api/trades", protect, tradeRoutes);
 app.use("/api/alerts", protect, alertRoutes);
 app.use("/api/dashboard", protect,  dashboardRoutes);
 app.use("/api/risk-rules", protect, riskRuleRoutes);
-
+app.use("/api/admin", adminRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-    PieChart,
-    Pie,
-    Cell,
     BarChart,
     Bar,
     LineChart,
@@ -28,12 +25,7 @@ import {
 
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
-
-const severityColors = {
-    LOW: "#22c55e",
-    MEDIUM: "#f59e0b",
-    HIGH: "#ef4444"
-};
+import AlertsSeverityChart from "../components/AlertsSeverityChart";
 
 const FixedChartTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) {
@@ -110,7 +102,7 @@ const Dashboard = () => {
         try {
             setLoading(true);
 
-        const [
+            const [
                 summaryResponse,
                 severityResponse,
                 typeResponse,
@@ -153,7 +145,7 @@ const Dashboard = () => {
             setLoading(false);
         }
     };
-    
+
     useEffect(() => {
         fetchDashboardData();
     }, []);
@@ -262,51 +254,73 @@ const Dashboard = () => {
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
-                <div className="rounded-2xl bg-white p-6 shadow">
-                    <h3 className="mb-4 text-lg font-bold text-slate-900">
-                        Alerts by Severity
-                    </h3>
 
-                    <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={severityData}
-                                    dataKey="count"
-                                    nameKey="severity"
-                                    cx="50%"
-                                    cy="50%"
-                                    outerRadius={90}
-                                    label
-                                >
-                                    {severityData.map((entry) => (
-                                        <Cell
-                                            key={entry.severity}
-                                            fill={severityColors[entry.severity] || "#6366f1"}
-                                        />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
+                <AlertsSeverityChart severityData={severityData} />
 
-                <div className="rounded-2xl bg-white p-6 shadow">
+                <div className="flex flex-col rounded-2xl bg-white p-6 shadow dark:bg-slate-900">
                     <h3 className="mb-4 text-lg font-bold text-slate-900">
                         Alerts by Type
                     </h3>
 
-                    <div className="h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={typeData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="alertType" />
-                                <YAxis />
-                                <Tooltip />
-                                <Bar dataKey="count" fill="#6366f1" radius={[8, 8, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="flex flex-1 items-center">
+                        <div className="h-72 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={typeData}
+                                    margin={{
+                                        top: 10,
+                                        right: 20,
+                                        left: 0,
+                                        bottom: 10
+                                    }}
+                                >
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="rgba(148, 163, 184, 0.35)"
+                                    />
+
+                                    <XAxis
+                                        dataKey="alertType"
+                                        interval={0}
+                                        height={55}
+                                        tickMargin={10}
+                                        tick={{
+                                            fontSize: 10,
+                                            fill: "#94a3b8"
+                                        }}
+                                        tickFormatter={(value) => {
+                                            if (value.length > 24) {
+                                                return value.slice(0, 24) + "...";
+                                            }
+
+                                            return value;
+                                        }}
+                                    />
+
+                                    <YAxis
+                                        tick={{
+                                            fontSize: 12,
+                                            fill: "#94a3b8"
+                                        }}
+                                    />
+
+                                    <Tooltip
+                                        cursor={false}
+                                        content={<GlassTooltip />}
+                                        wrapperStyle={{
+                                            outline: "none",
+                                            pointerEvents: "none"
+                                        }}
+                                    />
+
+                                    <Bar
+                                        dataKey="count"
+                                        fill="#6366f1"
+                                        radius={[8, 8, 0, 0]}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -368,28 +382,65 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="mt-6 rounded-2xl bg-white p-6 shadow">
-                <h3 className="mb-4 text-lg font-bold text-slate-900">
+            <div className="mt-6 rounded-2xl bg-white p-6 shadow dark:bg-slate-900">
+                <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">
                     Rule Trigger Frequency
                 </h3>
 
-                <p className="mb-4 text-sm text-slate-600">
+                <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
                     Shows how often each risk rule has blocked a trade or generated an alert.
                 </p>
 
-                <div className="h-80">
+                <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={ruleTriggerSummary.slice(0, 8)}>
-                            <CartesianGrid strokeDasharray="3 3" />
+                        <BarChart
+                            data={ruleTriggerSummary.slice(0, 8)}
+                            margin={{
+                                top: 10,
+                                right: 24,
+                                left: 0,
+                                bottom: 8
+                            }}
+                        >
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="rgba(148, 163, 184, 0.35)"
+                            />
+
                             <XAxis
                                 dataKey="ruleCode"
-                                angle={-20}
-                                textAnchor="end"
-                                height={90}
                                 interval={0}
+                                height={45}
+                                tickMargin={8}
+                                tick={{
+                                    fontSize: 10,
+                                    fill: "#94a3b8"
+                                }}
+                                tickFormatter={(value) => {
+                                    if (value.length > 18) {
+                                        return value.slice(0, 18) + "...";
+                                    }
+
+                                    return value;
+                                }}
                             />
-                            <YAxis />
-                            <Tooltip />
+
+                            <YAxis
+                                tick={{
+                                    fontSize: 12,
+                                    fill: "#94a3b8"
+                                }}
+                            />
+
+                            <Tooltip
+                                cursor={false}
+                                content={<GlassTooltip />}
+                                wrapperStyle={{
+                                    outline: "none",
+                                    pointerEvents: "none"
+                                }}
+                            />
+
                             <Bar
                                 dataKey="count"
                                 fill="#ef4444"
@@ -480,8 +531,8 @@ const Dashboard = () => {
                                         <td className="px-5 py-4">
                                             <span
                                                 className={`rounded-full px-3 py-1 text-xs font-bold ${event.eventType === "BLOCKED_TRADE"
-                                                        ? "bg-red-100 text-red-700"
-                                                        : "bg-blue-100 text-blue-700"
+                                                    ? "bg-red-100 text-red-700"
+                                                    : "bg-blue-100 text-blue-700"
                                                     }`}
                                             >
                                                 {event.eventType}
@@ -513,10 +564,10 @@ const Dashboard = () => {
                                         <td className="px-5 py-4">
                                             <span
                                                 className={`rounded-full px-3 py-1 text-xs font-bold ${event.severity === "HIGH"
-                                                        ? "bg-red-100 text-red-700"
-                                                        : event.severity === "MEDIUM"
-                                                            ? "bg-amber-100 text-amber-700"
-                                                            : "bg-green-100 text-green-700"
+                                                    ? "bg-red-100 text-red-700"
+                                                    : event.severity === "MEDIUM"
+                                                        ? "bg-amber-100 text-amber-700"
+                                                        : "bg-green-100 text-green-700"
                                                     }`}
                                             >
                                                 {event.severity}

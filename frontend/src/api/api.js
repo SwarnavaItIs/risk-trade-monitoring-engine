@@ -119,4 +119,19 @@ export const getBlockedTradeSummary = () => {
 export const getRecentRiskEvents = () => {
     return api.get("/dashboard/recent-risk-events");
 };
+
+//members page
+export const getAdminMembers = async () => {
+    return await api.get("/admin/members");
+};
+
+export const updateAdminMemberRole = async (memberId, role) => {
+    return await api.patch(`/admin/members/${memberId}/role`, {
+        role
+    });
+};
+
+export const deleteAdminMember = async (memberId) => {
+    return await api.delete(`/admin/members/${memberId}`);
+};
 export default api;

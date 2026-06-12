@@ -72,3 +72,96 @@ html.dark .shadow-lg,
 html.dark .shadow-xl {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
 }
+
+.severity-pie-tooltip {
+    animation: severityTooltipEnter 220ms ease-out both;
+    transform-origin: center;
+}
+
+@keyframes severityTooltipEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-overlay-enter {
+    animation: modalOverlayEnter 180ms ease-out both;
+}
+
+.modal-overlay-exit {
+    animation: modalOverlayExit 180ms ease-in both;
+}
+
+.modal-card-enter {
+    animation: modalCardEnter 220ms ease-out both;
+}
+
+.modal-card-exit {
+    animation: modalCardExit 160ms ease-in both;
+}
+
+@keyframes modalOverlayEnter {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalOverlayExit {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes modalCardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes modalCardExit {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(12px) scale(0.97);
+    }
+}
+
+.toast-enter {
+    animation: toastEnter 260ms ease-out both;
+}
+
+@keyframes toastEnter {
+    from {
+        opacity: 0;
+        transform: translateX(20px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
