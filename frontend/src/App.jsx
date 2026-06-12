@@ -3,6 +3,7 @@ import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import BounceIndicator from "./components/BounceIndicator";
+import ScrollToTop from "./components/ScrollToTop";
 
 import Dashboard from './pages/Dashboard';
 import Trades from './pages/Trades';
@@ -34,11 +35,12 @@ const ProtectedLayout = ({ children }) => {
 const App = () => {
     return (
         <Router>
+            <ScrollToTop />
             <Routes>
                 <Route path="/" element={<Navigate to="/Dashboard" />} />
 
                 <Route path="/admin/members" element={<Members />} />
-                
+
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
