@@ -4,4 +4,6 @@ node_modules/
 dist/
 build/
 backend/uploads/
-uploads/
+uploads/backend/cpp_risk_engine/risk_engine.exe
+backend/cpp_risk_engine/risk_engine.exe
+backend/cpp_risk_engine/risk_engine.exe

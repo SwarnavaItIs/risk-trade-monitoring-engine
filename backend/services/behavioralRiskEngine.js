@@ -1,4 +1,10 @@
 const { getRulesByTier, buildRuleMap } = require("./dynamicRiskEngine");
+const {
+    recordTradeVelocity,
+    recordSameSideMomentum
+} = require("./redisRiskWindow");
+
+const { runCppRiskEngine } = require("./cppRiskEngineService");
 
 const calculateSeverityFromScore = (riskScore) => {
     if (riskScore >= 70) {
@@ -36,9 +42,50 @@ const addTriggeredRule = (result, rule, reason) => {
     });
 };
 
-const evaluateHighFrequencyVelocity = (trade, recentTrades, rule, result) => {
+const buildResultFromCpp = (cppResult, ruleMap) => {
+    const ruleDetails = (cppResult.ruleDetails || [])
+        .filter((detail) => ruleMap[detail.ruleCode])
+        .map((detail) => {
+            const rule = ruleMap[detail.ruleCode];
+
+            return {
+                ruleCode: rule.ruleCode,
+                ruleName: rule.ruleName,
+                severity: rule.severity,
+                riskWeight: rule.riskWeight,
+                action: rule.action,
+                reason: detail.reason
+            };
+        });
+
+    return {
+        isRisky: ruleDetails.length > 0,
+        riskScore: ruleDetails.reduce((score, rule) => score + (rule.riskWeight || 0), 0),
+        severity: "LOW",
+        triggeredRules: ruleDetails.map((rule) => rule.ruleCode),
+        reasons: ruleDetails.map((rule) => rule.reason),
+        ruleDetails,
+        evaluationEngine: cppResult.evaluationEngine
+    };
+};
+
+const evaluateHighFrequencyVelocity = async (trade, recentTrades, rule, result) => {
     const maxTrades = rule.parameters?.maxTrades || 5;
     const windowSeconds = rule.parameters?.windowSeconds || 60;
+
+    const redisCount = await recordTradeVelocity(trade, windowSeconds);
+
+    if (redisCount !== null) {
+        if (redisCount >= maxTrades) {
+            addTriggeredRule(
+                result,
+                rule,
+                `Trader ${trade.traderId} made ${redisCount} trades within ${windowSeconds} seconds using Redis velocity window`
+            );
+        }
+
+        return;
+    }
 
     const tradeTime = getTradeTime(trade);
     const windowStart = getWindowStart(tradeTime, windowSeconds);
@@ -57,7 +104,7 @@ const evaluateHighFrequencyVelocity = (trade, recentTrades, rule, result) => {
         addTriggeredRule(
             result,
             rule,
-            `Trader ${trade.traderId} made ${tradesInWindow.length} trades within ${windowSeconds} seconds`
+            `Trader ${trade.traderId} made ${tradesInWindow.length} trades within ${windowSeconds} seconds using MongoDB fallback`
         );
     }
 };
@@ -91,9 +138,23 @@ const evaluateWashTradeDetection = (trade, recentTrades, rule, result) => {
     }
 };
 
-const evaluateMomentumIgnition = (trade, recentTrades, rule, result) => {
+const evaluateMomentumIgnition = async (trade, recentTrades, rule, result) => {
     const minSameSideTrades = rule.parameters?.minSameSideTrades || 4;
     const windowSeconds = rule.parameters?.windowSeconds || 60;
+
+    const redisCount = await recordSameSideMomentum(trade, windowSeconds);
+
+    if (redisCount !== null) {
+        if (redisCount >= minSameSideTrades) {
+            addTriggeredRule(
+                result,
+                rule,
+                `Momentum ignition pattern: ${redisCount} same-side ${trade.tradeType} trades on ${trade.stockSymbol} within ${windowSeconds} seconds using Redis momentum window`
+            );
+        }
+
+        return;
+    }
 
     const tradeTime = getTradeTime(trade);
     const windowStart = getWindowStart(tradeTime, windowSeconds);
@@ -114,7 +175,7 @@ const evaluateMomentumIgnition = (trade, recentTrades, rule, result) => {
         addTriggeredRule(
             result,
             rule,
-            `Momentum ignition pattern: ${sameSideTrades.length} same-side ${trade.tradeType} trades on ${trade.stockSymbol} within ${windowSeconds} seconds`
+            `Momentum ignition pattern: ${sameSideTrades.length} same-side ${trade.tradeType} trades on ${trade.stockSymbol} within ${windowSeconds} seconds using MongoDB fallback`
         );
     }
 };
@@ -158,17 +219,46 @@ const evaluateBehavioralRules = async (trade, recentTrades = []) => {
     const behavioralRules = await getRulesByTier("BEHAVIORAL");
     const ruleMap = buildRuleMap(behavioralRules);
 
+    const cppConfig = {
+        maxTrades: ruleMap.R6_HIGH_FREQUENCY_VELOCITY?.parameters?.maxTrades || 5,
+        velocityWindowSeconds: ruleMap.R6_HIGH_FREQUENCY_VELOCITY?.parameters?.windowSeconds || 60,
+        washWindowMinutes: ruleMap.R7_WASH_TRADE_DETECTION?.parameters?.windowMinutes || 10,
+        minSameSideTrades: ruleMap.R8_MOMENTUM_IGNITION?.parameters?.minSameSideTrades || 4,
+        momentumWindowSeconds: ruleMap.R8_MOMENTUM_IGNITION?.parameters?.windowSeconds || 60
+    };
+
+    const cppResult = await runCppRiskEngine(trade, recentTrades, cppConfig);
+
+    if (cppResult) {
+        const result = buildResultFromCpp(cppResult, ruleMap);
+
+        if (ruleMap.R10_AFTER_HOURS_RESTRICTED_TRADING) {
+            evaluateAfterHoursRestrictedTrading(
+                trade,
+                ruleMap.R10_AFTER_HOURS_RESTRICTED_TRADING,
+                result
+            );
+        }
+
+        result.riskScore = Math.min(result.riskScore, 100);
+        result.severity = calculateSeverityFromScore(result.riskScore);
+        result.isRisky = result.triggeredRules.length > 0;
+
+        return result;
+    }
+
     const result = {
         isRisky: false,
         riskScore: 0,
         severity: "LOW",
         triggeredRules: [],
         reasons: [],
-        ruleDetails: []
+        ruleDetails: [],
+        evaluationEngine: "JAVASCRIPT_FALLBACK"
     };
 
     if (ruleMap.R6_HIGH_FREQUENCY_VELOCITY) {
-        evaluateHighFrequencyVelocity(
+        await evaluateHighFrequencyVelocity(
             trade,
             recentTrades,
             ruleMap.R6_HIGH_FREQUENCY_VELOCITY,
@@ -186,7 +276,7 @@ const evaluateBehavioralRules = async (trade, recentTrades = []) => {
     }
 
     if (ruleMap.R8_MOMENTUM_IGNITION) {
-        evaluateMomentumIgnition(
+        await evaluateMomentumIgnition(
             trade,
             recentTrades,
             ruleMap.R8_MOMENTUM_IGNITION,

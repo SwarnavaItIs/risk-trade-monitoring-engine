@@ -1,5 +1,8 @@
 const Trade = require("../models/Trade");
 const { getRulesByTier, buildRuleMap } = require("./dynamicRiskEngine");
+const {
+    checkAndStoreDuplicateTrade
+} = require("./redisRiskWindow");
 
 const defaultMarketPrices = {
     RELIANCE: 2800,
@@ -112,6 +115,25 @@ const evaluateDuplicateOrderDetection = async (tradeData, rule, failedRules) => 
     const duplicateWindowSeconds =
         rule.parameters?.duplicateWindowSeconds || 5;
 
+    const redisDuplicate = await checkAndStoreDuplicateTrade(
+        tradeData,
+        duplicateWindowSeconds
+    );
+
+    if (redisDuplicate === true) {
+        addFailedRule(
+            failedRules,
+            rule,
+            `Duplicate trade detected within ${duplicateWindowSeconds} seconds using Redis real-time window`
+        );
+
+        return;
+    }
+
+    if (redisDuplicate === false) {
+        return;
+    }
+
     const tradeTime = tradeData.tradeTime
         ? new Date(tradeData.tradeTime)
         : new Date();
@@ -136,7 +158,7 @@ const evaluateDuplicateOrderDetection = async (tradeData, rule, failedRules) => 
         addFailedRule(
             failedRules,
             rule,
-            `Duplicate trade detected within ${duplicateWindowSeconds} seconds`
+            `Duplicate trade detected within ${duplicateWindowSeconds} seconds using MongoDB fallback`
         );
     }
 };
@@ -184,18 +206,21 @@ const evaluatePreTradeRules = async (tradeData) => {
         );
     }
 
-    if (ruleMap.R4_DUPLICATE_ORDER_DETECTION) {
-        await evaluateDuplicateOrderDetection(
-            tradeData,
-            ruleMap.R4_DUPLICATE_ORDER_DETECTION,
-            failedRules
-        );
-    }
-
     if (ruleMap.R5_SINGLE_ORDER_QUANTITY_CAP) {
         evaluateSingleOrderQuantityCap(
             tradeData,
             ruleMap.R5_SINGLE_ORDER_QUANTITY_CAP,
+            failedRules
+        );
+    }
+
+    if (
+        failedRules.length === 0 &&
+        ruleMap.R4_DUPLICATE_ORDER_DETECTION
+    ) {
+        await evaluateDuplicateOrderDetection(
+            tradeData,
+            ruleMap.R4_DUPLICATE_ORDER_DETECTION,
             failedRules
         );
     }
