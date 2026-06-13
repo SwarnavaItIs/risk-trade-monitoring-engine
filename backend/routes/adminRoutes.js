@@ -4,6 +4,7 @@ const {
     updateMemberRole,
     deleteMember
 } = require("../controllers/adminController");
+const { getAuditLogs } = require("../controllers/auditLogController");
 
 const {
     protect,
@@ -18,5 +19,6 @@ router.use(restrictTo("ADMIN"));
 router.get("/members", getMembers);
 router.patch("/members/:id/role", updateMemberRole);
 router.delete("/members/:id", deleteMember);
+router.get("/audit-logs", getAuditLogs);
 
 module.exports = router;

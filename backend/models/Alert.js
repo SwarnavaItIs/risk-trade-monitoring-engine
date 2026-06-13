@@ -35,6 +35,65 @@ const alertSchema = new mongoose.Schema(
             required: true
         },
 
+        priority: {
+            type: String,
+            enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            default: function () {
+                return ["LOW", "MEDIUM", "HIGH"].includes(this.severity)
+                    ? this.severity
+                    : "MEDIUM";
+            }
+        },
+
+        assignedTo: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null
+        },
+
+        assignedToName: {
+            type: String,
+            default: ""
+        },
+
+        assignedToEmail: {
+            type: String,
+            default: ""
+        },
+
+        reviewDeadline: {
+            type: Date
+        },
+
+        commentHistory: {
+            type: [
+                {
+                    comment: {
+                        type: String,
+                        required: true,
+                        trim: true
+                    },
+                    commentedBy: {
+                        type: String,
+                        required: true
+                    },
+                    commentedByEmail: {
+                        type: String,
+                        required: true
+                    },
+                    commentedByRole: {
+                        type: String,
+                        required: true
+                    },
+                    createdAt: {
+                        type: Date,
+                        default: Date.now
+                    }
+                }
+            ],
+            default: []
+        },
+
         riskScore: {
             type: Number,
             default: 0
@@ -79,5 +138,8 @@ const alertSchema = new mongoose.Schema(
         timestamps: true
     }
 );
+
+alertSchema.index({ assignedTo: 1, status: 1, createdAt: -1 });
+alertSchema.index({ priority: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Alert", alertSchema);

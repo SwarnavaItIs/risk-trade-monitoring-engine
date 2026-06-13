@@ -1,4 +1,8 @@
 const RiskRule = require("../models/RiskRules");
+const {
+    buildChanges,
+    createAuditLog
+} = require("../services/auditLogService");
 
 const getRiskRules = async (req, res) => {
     try {
@@ -80,6 +84,14 @@ const updateRiskRule = async (req, res) => {
             }
         });
 
+        const existingRule = await RiskRule.findById(req.params.id);
+
+        if (!existingRule) {
+            return res.status(404).json({
+                message: "Risk rule not found"
+            });
+        }
+
         const rule = await RiskRule.findByIdAndUpdate(
             req.params.id,
             updateData,
@@ -89,9 +101,18 @@ const updateRiskRule = async (req, res) => {
             }
         );
 
-        if (!rule) {
-            return res.status(404).json({
-                message: "Risk rule not found"
+        const changes = buildChanges(existingRule, rule, allowedUpdates);
+
+        if (Object.keys(changes).length > 0) {
+            await createAuditLog({
+                req,
+                action: "RISK_RULE_UPDATED",
+                target: {
+                    entityType: "RISK_RULE",
+                    entityId: rule._id.toString(),
+                    label: `${rule.ruleCode} - ${rule.ruleName}`
+                },
+                changes
             });
         }
 

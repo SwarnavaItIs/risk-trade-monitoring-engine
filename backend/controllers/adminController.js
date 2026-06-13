@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const { createAuditLog } = require("../services/auditLogService");
 
 const getMembers = async (req, res) => {
     try {
@@ -59,8 +60,28 @@ const updateMemberRole = async (req, res) => {
             }
         }
 
+        const previousRole = member.role;
+
         member.role = role;
         await member.save();
+
+        if (previousRole !== role) {
+            await createAuditLog({
+                req,
+                action: "USER_ROLE_UPDATED",
+                target: {
+                    entityType: "USER",
+                    entityId: member._id.toString(),
+                    label: `${member.name} (${member.email})`
+                },
+                changes: {
+                    role: {
+                        from: previousRole,
+                        to: role
+                    }
+                }
+            });
+        }
 
         const updatedMember = await User.findById(memberId)
             .select("-password -passwordResetToken -passwordResetExpires");

@@ -8,6 +8,7 @@ const {
     logBlockedTradeEvents,
     logAlertRuleEvents
 } = require("../services/riskEventLogger");
+const { createAuditLog } = require("../services/auditLogService");
 
 const fs = require("fs");
 const csv = require("csv-parser");
@@ -384,12 +385,32 @@ const uploadTradesCSV = async (req, res) => {
             fs.unlinkSync(req.file.path);
         }
 
+        await createAuditLog({
+            req,
+            action: "CSV_TRADES_UPLOADED",
+            target: {
+                entityType: "CSV_UPLOAD",
+                entityId: req.file.filename,
+                label: req.file.originalname
+            },
+            metadata: {
+                fileName: req.file.originalname,
+                fileSize: req.file.size,
+                totalRows: rows.length,
+                tradesSaved,
+                alertsGenerated,
+                blockedRows,
+                failedRowsCount: failedRows.length
+            }
+        });
+
         res.status(201).json({
             message: "CSV processed successfully",
             data: {
                 totalRows: rows.length,
                 tradesSaved,
                 alertsGenerated,
+                blockedRows,
                 failedRowsCount: failedRows.length,
                 failedRows
             }

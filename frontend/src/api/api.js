@@ -73,6 +73,20 @@ export const getAlertById = (id) => {
 export const updateAlertStatus = (id, updateData) => {
     return api.put(`/alerts/${id}/status`, updateData);
 };
+export const assignAlert = (id, assignmentData) => {
+    return api.put(`/alerts/${id}/assign`, assignmentData);
+};
+export const addAlertComment = (id, commentData) => {
+    return api.post(`/alerts/${id}/comments`, commentData);
+};
+export const updateAlertPriority = (id, priorityData) => {
+    return api.put(`/alerts/${id}/priority`, priorityData);
+};
+export const getMyAssignedAlerts = (filters = {}) => {
+    return api.get("/alerts/assigned/me", {
+        params: filters
+    });
+};
 
 //csv upload
 export const uploadTradesCSV = (file) => {
@@ -134,4 +148,11 @@ export const updateAdminMemberRole = async (memberId, role) => {
 export const deleteAdminMember = async (memberId) => {
     return await api.delete(`/admin/members/${memberId}`);
 };
+
+export const getAdminAuditLogs = (filters = {}) => {
+    return api.get("/admin/audit-logs", {
+        params: filters
+    });
+};
+
 export default api;

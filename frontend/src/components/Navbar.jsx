@@ -70,6 +70,10 @@ const Navbar = () => {
                         Alerts
                     </Link>
 
+                    <Link className="transition hover:text-blue-300" to="/my-alerts">
+                        My Alerts
+                    </Link>
+
                     <Link className="transition hover:text-blue-300" to="/csv-upload">
                         CSV Upload
                     </Link>
@@ -82,6 +86,10 @@ const Navbar = () => {
 
                             <Link className="transition hover:text-blue-300" to="/admin/members">
                                 Members
+                            </Link>
+
+                            <Link className="transition hover:text-blue-300" to="/admin/audit-logs">
+                                Audit Logs
                             </Link>
                         </>
                     )}

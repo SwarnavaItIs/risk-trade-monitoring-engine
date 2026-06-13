@@ -17,6 +17,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import RiskRules from "./pages/RiskRules";
 import Members from "./pages/Members";
+import AuditLogs from "./pages/AuditLogs";
 
 const ProtectedLayout = ({ children }) => {
     return (
@@ -64,6 +65,12 @@ const App = () => {
                     </ProtectedLayout>
                 } />
 
+                <Route path="/my-alerts" element={
+                    <ProtectedLayout>
+                        <Alerts assignedToMe />
+                    </ProtectedLayout>
+                } />
+
                 <Route path="/alerts/:id" element={
                     <ProtectedLayout>
                         <AlertDetails />
@@ -81,6 +88,15 @@ const App = () => {
                     element={
                         <ProtectedLayout>
                             <RiskRules />
+                        </ProtectedLayout>
+                    }
+                />
+
+                <Route
+                    path="/admin/audit-logs"
+                    element={
+                        <ProtectedLayout>
+                            <AuditLogs />
                         </ProtectedLayout>
                     }
                 />
