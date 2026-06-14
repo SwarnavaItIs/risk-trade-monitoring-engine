@@ -24,7 +24,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "node --test --test-isolation=none",
+    "test": "node --test",
     "seed:risk-rules": "node seed/riskRulesSeeder.js",
     "build:cpp:win": "g++ cpp_risk_engine/risk_engine.cpp -std=c++17 -O2 -o cpp_risk_engine/risk_engine.exe",
     "build:cpp:linux": "g++ cpp_risk_engine/risk_engine.cpp -std=c++17 -O2 -o cpp_risk_engine/risk_engine",
