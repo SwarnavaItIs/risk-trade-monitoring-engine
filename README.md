@@ -27,24 +27,6 @@ The Risk Trade Monitoring Engine allows users to submit trades manually or throu
 7. **Post-trade audits** detect portfolio concentration and unusually fast capital usage.
 
 ---
-
-## Recent Project Improvements
-
-* Added a complete order lifecycle with create, cancel, fill, filtering, audit logging, and an Orders page.
-* Activated R9 order-to-trade ratio detection using cancellation and fill activity.
-* Improved R7 wash-trade detection with quantity and price similarity tolerances.
-* Improved R8 momentum-ignition checks with minimum notional and optional price-direction validation.
-* Added configurable R10 restricted-symbol and after-hours behavior while preserving alert-only behavioral flow.
-* Added R11/R12 post-trade audit execution and an admin-only Risk Audit page.
-* Added alert assignment, priority, review deadlines, comment history, and a My Alerts workflow.
-* Added Redis connection visibility, C++ executable health checks, and an admin System Health page.
-* Added R2 market-price lookup through Redis cache, Finnhub, and static fallback prices.
-* Added native calendar and time pickers for manual trade times and alert review deadlines.
-* Added clear, beginner-friendly R1-R12 descriptions in the Risk Rules UI.
-* Added GitHub Actions CI for backend tests, Linux C++ compilation, C++ verification, and frontend builds.
-
----
-
 ## Tech Stack
 
 ### Frontend
