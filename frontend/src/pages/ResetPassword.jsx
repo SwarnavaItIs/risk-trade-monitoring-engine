@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import { resetPassword } from "../api/api";
+import useToast from "../hooks/useToast";
 
 const ResetPassword = () => {
     const { token } = useParams();
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,7 +19,9 @@ const ResetPassword = () => {
         event.preventDefault();
 
         if (password !== confirmPassword) {
-            setError("Passwords do not match");
+            const message = "Passwords do not match";
+            setError(message);
+            showToast(message, { title: "Password reset failed", variant: "danger" });
             return;
         }
 
@@ -28,6 +32,9 @@ const ResetPassword = () => {
             await resetPassword(token, password);
 
             navigate("/login");
+            showToast("Your password was reset successfully.", {
+                title: "Password updated"
+            });
         }
         catch (err) {
             const message =
@@ -35,6 +42,7 @@ const ResetPassword = () => {
                 "Failed to reset password";
 
             setError(message);
+            showToast(message, { title: "Password reset failed", variant: "danger" });
             console.log(err);
         }
         finally {

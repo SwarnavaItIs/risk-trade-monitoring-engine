@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import { forgotPassword } from "../api/api";
+import useToast from "../hooks/useToast";
 
 const ForgotPassword = () => {
+    const { showToast } = useToast();
     const [email, setEmail] = useState("");
     const [resetToken, setResetToken] = useState("");
     const [loading, setLoading] = useState(false);
@@ -20,6 +22,9 @@ const ForgotPassword = () => {
             const response = await forgotPassword(email);
 
             setResetToken(response.data.data.resetToken);
+            showToast(response.data.message || "Password reset link generated.", {
+                title: "Reset link ready"
+            });
         }
         catch (err) {
             const message =
@@ -27,6 +32,7 @@ const ForgotPassword = () => {
                 "Failed to generate reset token";
 
             setError(message);
+            showToast(message, { title: "Reset request failed", variant: "danger" });
             console.log(err);
         }
         finally {

@@ -3,12 +3,14 @@ import { getRiskRules, updateRiskRule } from "../api/api";
 
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
+import useToast from "../hooks/useToast";
 
 const tierOptions = ["", "PRE_TRADE", "BEHAVIORAL", "POST_TRADE"];
 const actionOptions = ["BLOCK", "ALERT", "AUDIT"];
 const severityOptions = ["LOW", "MEDIUM", "HIGH"];
 
 const RiskRules = () => {
+    const { showToast } = useToast();
     const loggedInUser = JSON.parse(localStorage.getItem("user"));
     const isAdmin = loggedInUser?.role === "ADMIN";
 
@@ -33,7 +35,6 @@ const RiskRules = () => {
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
 
     const fetchRules = async (appliedFilters = filters) => {
         try {
@@ -98,7 +99,6 @@ const RiskRules = () => {
 
     const startEditing = (rule) => {
         setEditingRuleId(rule._id);
-        setMessage("");
         setError("");
 
         setEditData({
@@ -114,7 +114,6 @@ const RiskRules = () => {
 
     const cancelEditing = () => {
         setEditingRuleId(null);
-        setMessage("");
         setError("");
     };
 
@@ -131,7 +130,6 @@ const RiskRules = () => {
         try {
             setUpdating(true);
             setError("");
-            setMessage("");
 
             let parsedParameters;
 
@@ -139,7 +137,9 @@ const RiskRules = () => {
                 parsedParameters = JSON.parse(editData.parametersText);
             }
             catch {
-                setError("Parameters must be valid JSON.");
+                const message = "Parameters must be valid JSON.";
+                setError(message);
+                showToast(message, { title: "Invalid parameters", variant: "danger" });
                 return;
             }
 
@@ -155,8 +155,10 @@ const RiskRules = () => {
 
             await updateRiskRule(ruleId, payload);
 
-            setMessage("Risk rule updated successfully.");
             setEditingRuleId(null);
+            showToast("Risk rule updated successfully.", {
+                title: "Rule updated"
+            });
 
             await fetchRules(filters);
         }
@@ -166,6 +168,7 @@ const RiskRules = () => {
                 "Failed to update risk rule";
 
             setError(message);
+            showToast(message, { title: "Rule update failed", variant: "danger" });
             console.log(err);
         }
         finally {
@@ -234,12 +237,6 @@ const RiskRules = () => {
             {!isAdmin && (
                 <div className="mb-6 rounded-lg bg-amber-50 p-4 font-semibold text-amber-700">
                     You are logged in as ANALYST. You can view rules, but only ADMIN users can update them.
-                </div>
-            )}
-
-            {message && (
-                <div className="mb-6 rounded-lg bg-green-50 p-4 font-semibold text-green-700">
-                    {message}
                 </div>
             )}
 

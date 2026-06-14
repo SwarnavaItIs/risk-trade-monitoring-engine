@@ -8,6 +8,7 @@ import {
 } from "../api/api";
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
+import useToast from "../hooks/useToast";
 
 const initialForm = {
     orderId: "",
@@ -42,6 +43,7 @@ const getStatusClass = (status) => {
 };
 
 const Orders = () => {
+    const { showToast } = useToast();
     const [orders, setOrders] = useState([]);
     const [form, setForm] = useState(initialForm);
     const [filters, setFilters] = useState(initialFilters);
@@ -49,7 +51,6 @@ const Orders = () => {
     const [submitting, setSubmitting] = useState(false);
     const [actionOrderId, setActionOrderId] = useState("");
     const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
     const [riskResult, setRiskResult] = useState(null);
 
     const fetchOrders = async (appliedFilters = filters) => {
@@ -99,7 +100,6 @@ const Orders = () => {
         try {
             setSubmitting(true);
             setError("");
-            setMessage("");
             setRiskResult(null);
 
             const response = await createOrder({
@@ -109,12 +109,16 @@ const Orders = () => {
             });
 
             setForm(initialForm);
-            setMessage(response.data.message);
             setRiskResult(response.data.data.riskResult);
+            showToast(response.data.message || "Order created successfully.", {
+                title: "Order created"
+            });
             await fetchOrders(filters);
         }
         catch (err) {
-            setError(err.response?.data?.message || "Failed to create order");
+            const message = err.response?.data?.message || "Failed to create order";
+            setError(message);
+            showToast(message, { title: "Order creation failed", variant: "danger" });
         }
         finally {
             setSubmitting(false);
@@ -125,19 +129,23 @@ const Orders = () => {
         try {
             setActionOrderId(order._id);
             setError("");
-            setMessage("");
             setRiskResult(null);
 
             const response = action === "cancel"
                 ? await cancelOrder(order._id)
                 : await fillOrder(order._id);
 
-            setMessage(response.data.message);
             setRiskResult(response.data.data.riskResult);
+            showToast(
+                response.data.message || `Order ${action === "cancel" ? "cancelled" : "filled"} successfully.`,
+                { title: action === "cancel" ? "Order cancelled" : "Order filled" }
+            );
             await fetchOrders(filters);
         }
         catch (err) {
-            setError(err.response?.data?.message || `Failed to ${action} order`);
+            const message = err.response?.data?.message || `Failed to ${action} order`;
+            setError(message);
+            showToast(message, { title: "Order action failed", variant: "danger" });
         }
         finally {
             setActionOrderId("");
@@ -192,12 +200,6 @@ const Orders = () => {
             {(submitting || actionOrderId) && (
                 <div className="mb-6">
                     <LoadingButton text="Processing order lifecycle..." />
-                </div>
-            )}
-
-            {message && (
-                <div className="mb-6 rounded-xl bg-emerald-50 p-4 font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                    {message}
                 </div>
             )}
 

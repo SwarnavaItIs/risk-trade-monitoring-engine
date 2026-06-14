@@ -4,6 +4,7 @@ import { createTrade, getTrades } from "../api/api";
 import DateTimeInput from "../components/DateTimeInput";
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
+import useToast from "../hooks/useToast";
 import { dateTimeLocalToIso } from "../utils/dateTime";
 
 const initialFormData = {
@@ -17,6 +18,7 @@ const initialFormData = {
 };
 
 const Trades = () => {
+    const { showToast } = useToast();
     const [trades, setTrades] = useState([]);
     const [formData, setFormData] = useState(initialFormData);
     const [submitResult, setSubmitResult] = useState(null);
@@ -86,6 +88,9 @@ const Trades = () => {
 
             setSubmitResult(response.data.data);
             setFormData(initialFormData);
+            showToast(response.data.message || "Trade accepted successfully.", {
+                title: "Trade accepted"
+            });
 
             await fetchTrades();
         }
@@ -95,6 +100,10 @@ const Trades = () => {
             if (responseData?.blocked) {
                 setBlockedResult(responseData);
                 setFormError("");
+                showToast(
+                    responseData.message || "Trade blocked by pre-trade controls.",
+                    { title: "Trade blocked", variant: "danger", duration: 4500 }
+                );
             } else {
                 const message =
                     responseData?.message ||
@@ -102,6 +111,7 @@ const Trades = () => {
                     "Failed to create trade";
 
                 setFormError(message);
+                showToast(message, { title: "Trade creation failed", variant: "danger" });
             }
 
             console.log(err);

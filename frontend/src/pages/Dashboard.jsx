@@ -27,34 +27,6 @@ import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
 import AlertsSeverityChart from "../components/AlertsSeverityChart";
 
-const FixedChartTooltip = ({ active, payload, label }) => {
-    if (!active || !payload || payload.length === 0) {
-        return null;
-    }
-
-    return (
-        <div className="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur">
-            <p className="mb-2 font-bold text-slate-900">
-                {label}
-            </p>
-
-            <div className="space-y-1">
-                {payload.map((item) => (
-                    <p key={item.dataKey} className="text-sm text-slate-700">
-                        <span className="font-semibold">
-                            {item.name || item.dataKey}
-                        </span>
-                        {" : "}
-                        <span className="font-bold">
-                            {item.value}
-                        </span>
-                    </p>
-                ))}
-            </div>
-        </div>
-    );
-};
-
 const GlassTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) {
         return null;
@@ -147,6 +119,7 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchDashboardData();
     }, []);
 

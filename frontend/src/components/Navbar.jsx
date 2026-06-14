@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
+import useToast from "../hooks/useToast";
 
 const Navbar = () => {
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -27,6 +29,7 @@ const Navbar = () => {
             localStorage.removeItem("user");
 
             navigate("/login");
+            showToast("You signed out successfully.", { title: "Signed out" });
         }, 1200);
     };
 

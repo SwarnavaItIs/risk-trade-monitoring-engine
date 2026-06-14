@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const ActionModal = ({
     isOpen,
@@ -14,11 +14,18 @@ const ActionModal = ({
 }) => {
     const [isClosing, setIsClosing] = useState(false);
 
-    useEffect(() => {
-        if (isOpen) {
-            setIsClosing(false);
+    const handleClose = useCallback(() => {
+        if (loading) {
+            return;
         }
-    }, [isOpen]);
+
+        setIsClosing(true);
+
+        setTimeout(() => {
+            setIsClosing(false);
+            onClose();
+        }, 180);
+    }, [loading, onClose]);
 
     useEffect(() => {
         const handleEscape = (event) => {
@@ -32,23 +39,11 @@ const ActionModal = ({
         return () => {
             document.removeEventListener("keydown", handleEscape);
         };
-    }, [isOpen, loading]);
+    }, [handleClose, isOpen, loading]);
 
     if (!isOpen) {
         return null;
     }
-
-    const handleClose = () => {
-        if (loading) {
-            return;
-        }
-
-        setIsClosing(true);
-
-        setTimeout(() => {
-            onClose();
-        }, 180);
-    };
 
     const handleOverlayClick = (event) => {
         if (event.target === event.currentTarget) {

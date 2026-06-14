@@ -4,9 +4,11 @@ import ThemeToggle from "../components/ThemeToggle";
 
 import GoogleIconButton from "../components/GoogleIconButton"; 
 import { googleLoginUser, loginUser } from "../api/api";
+import useToast from "../hooks/useToast";
 
 const Login = () => {
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [formData, setFormData] = useState({
         email: "",
@@ -36,6 +38,7 @@ const Login = () => {
             localStorage.setItem("user", JSON.stringify(response.data.data.user));
 
             navigate("/dashboard");
+            showToast("You signed in successfully.", { title: "Welcome back" });
         }
         catch (err) {
             const message =
@@ -43,6 +46,7 @@ const Login = () => {
                 "Google login failed";
 
             setError(message);
+            showToast(message, { title: "Login failed", variant: "danger" });
             console.log(err);
         }
         finally {
@@ -63,6 +67,7 @@ const Login = () => {
             localStorage.setItem("user", JSON.stringify(response.data.data.user));
 
             navigate("/dashboard");
+            showToast("You signed in successfully.", { title: "Welcome back" });
         }
         catch (err) {
             const message =
@@ -70,6 +75,7 @@ const Login = () => {
                 "Failed to login";
 
             setError(message);
+            showToast(message, { title: "Login failed", variant: "danger" });
             console.log(err);
         }
         finally {
@@ -168,6 +174,10 @@ const Login = () => {
                             onSuccess={handleGoogleSuccess}
                             onError={() => {
                                 setError("Google login failed");
+                                showToast("Google login failed", {
+                                    title: "Login failed",
+                                    variant: "danger"
+                                });
                             }}
                         />
                     </div>

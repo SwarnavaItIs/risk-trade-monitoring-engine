@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { getEngineHealth } from "../api/api";
 import SkeletonLoader from "../components/SkeletonLoader";
+import useToast from "../hooks/useToast";
 
 const StatusBadge = ({ healthy, healthyLabel, unhealthyLabel }) => {
     return (
@@ -29,11 +30,12 @@ const DetailRow = ({ label, value }) => {
 };
 
 const SystemHealth = () => {
+    const { showToast } = useToast();
     const [health, setHealth] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const fetchHealth = async () => {
+    const fetchHealth = async (notify = false) => {
         try {
             setLoading(true);
 
@@ -41,9 +43,18 @@ const SystemHealth = () => {
 
             setHealth(response.data.data);
             setError("");
+            if (notify) {
+                showToast("Engine health status refreshed.", {
+                    title: "Status refreshed"
+                });
+            }
         }
         catch (err) {
-            setError(err.response?.data?.message || "Failed to load system health");
+            const message = err.response?.data?.message || "Failed to load system health";
+            setError(message);
+            if (notify) {
+                showToast(message, { title: "Refresh failed", variant: "danger" });
+            }
         }
         finally {
             setLoading(false);
@@ -53,6 +64,7 @@ const SystemHealth = () => {
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchHealth();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
@@ -70,7 +82,7 @@ const SystemHealth = () => {
 
                 <button
                     type="button"
-                    onClick={fetchHealth}
+                    onClick={() => fetchHealth(true)}
                     disabled={loading}
                     className="rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >

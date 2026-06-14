@@ -2,8 +2,10 @@ import { useState } from "react";
 import { uploadTradesCSV } from "../api/api";
 
 import LoadingButton from "../components/LoadingButton";
+import useToast from "../hooks/useToast";
 
 const CsvUpload = () => {
+    const { showToast } = useToast();
     const [file, setFile] = useState(null);
     const [dragActive, setDragActive] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -16,7 +18,9 @@ const CsvUpload = () => {
         }
 
         if (!selectedFile.name.endsWith(".csv")) {
-            setError("Only CSV files are allowed.");
+            const message = "Only CSV files are allowed.";
+            setError(message);
+            showToast(message, { title: "Invalid file", variant: "danger" });
             setFile(null);
             return;
         }
@@ -59,7 +63,9 @@ const CsvUpload = () => {
         event.preventDefault();
 
         if (!file) {
-            setError("Please select or drop a CSV file first.");
+            const message = "Please select or drop a CSV file first.";
+            setError(message);
+            showToast(message, { title: "No file selected", variant: "danger" });
             return;
         }
 
@@ -72,6 +78,9 @@ const CsvUpload = () => {
 
             setResult(response.data.data);
             setFile(null);
+            showToast(response.data.message || "CSV trades uploaded successfully.", {
+                title: "Upload completed"
+            });
         }
         catch (err) {
             const message =
@@ -80,6 +89,7 @@ const CsvUpload = () => {
                 "Failed to upload CSV";
 
             setError(message);
+            showToast(message, { title: "Upload failed", variant: "danger" });
             console.log(err);
         }
         finally {

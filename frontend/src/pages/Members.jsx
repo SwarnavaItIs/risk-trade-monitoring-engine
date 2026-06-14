@@ -9,9 +9,10 @@ import {
 import LoadingButton from "../components/LoadingButton";
 import Navbar from "../components/Navbar";
 import ActionModal from "../components/ActionModal";
-import Toast from "../components/Toast";
+import useToast from "../hooks/useToast";
 
 const Members = () => {
+    const { showToast } = useToast();
     const [members, setMembers] = useState([]);
     const [stats, setStats] = useState({
         totalMembers: 0,
@@ -36,13 +37,6 @@ const Members = () => {
         showCancel: false,
         variant: "info",
         onConfirm: null
-    });
-
-    const [toastConfig, setToastConfig] = useState({
-        isOpen: false,
-        title: "",
-        message: "",
-        variant: "success"
     });
 
     const fetchMembers = async () => {
@@ -74,6 +68,7 @@ const Members = () => {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchMembers();
     }, []);
 
@@ -123,15 +118,18 @@ const Members = () => {
                     await fetchMembers();
 
                     showToast(
-                        "Role updated",
                         `${member.name}'s role has been updated successfully.`,
-                        "success"
+                        { title: "Role updated" }
                     );
                 }
                 catch (err) {
                     console.log(err);
                     closeModal();
 
+                    showToast(
+                        err.response?.data?.message || "Failed to update member role.",
+                        { title: "Role update failed", variant: "danger" }
+                    );
                     openInfoModal(
                         "Action failed",
                         err.response?.data?.message || "Failed to update member role.",
@@ -169,15 +167,18 @@ const Members = () => {
                     await fetchMembers();
 
                     showToast(
-                        "Member removed",
                         `${member.name} has been removed successfully.`,
-                        "success"
+                        { title: "Member removed" }
                     );
                 }
                 catch (err) {
                     console.log(err);
                     closeModal();
 
+                    showToast(
+                        err.response?.data?.message || "Failed to remove member.",
+                        { title: "Member removal failed", variant: "danger" }
+                    );
                     openInfoModal(
                         "Action failed",
                         err.response?.data?.message || "Failed to remove member.",
@@ -247,24 +248,6 @@ const Members = () => {
         if (action) {
             await action();
         }
-    };
-
-    const showToast = (title, message, variant = "success") => {
-        setToastConfig({
-            isOpen: true,
-            title,
-            message,
-            variant
-        });
-    };
-
-    const closeToast = () => {
-        setToastConfig({
-            isOpen: false,
-            title: "",
-            message: "",
-            variant: "success"
-        });
     };
 
     if (loading) {
@@ -528,13 +511,6 @@ const Members = () => {
                 loading={!!actionLoading}
             />
 
-            <Toast
-                isOpen={toastConfig.isOpen}
-                title={toastConfig.title}
-                message={toastConfig.message}
-                variant={toastConfig.variant}
-                onClose={closeToast}
-            />
         </>
     );
 };

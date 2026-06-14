@@ -4,9 +4,11 @@ import ThemeToggle from "../components/ThemeToggle";
 
 import GoogleIconButton from "../components/GoogleIconButton"; 
 import { googleLoginUser, registerUser } from "../api/api";
+import useToast from "../hooks/useToast";
 
 const Register = () => {
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [formData, setFormData] = useState({
         name: "",
@@ -38,6 +40,7 @@ const Register = () => {
             localStorage.setItem("user", JSON.stringify(response.data.data.user));
 
             navigate("/dashboard");
+            showToast("Your account is ready.", { title: "Registration completed" });
         }
         catch (err) {
             const message =
@@ -45,6 +48,7 @@ const Register = () => {
                 "Google registration failed";
 
             setError(message);
+            showToast(message, { title: "Registration failed", variant: "danger" });
             console.log(err);
         }
         finally {
@@ -65,6 +69,7 @@ const Register = () => {
             localStorage.setItem("user", JSON.stringify(response.data.data.user));
 
             navigate("/dashboard");
+            showToast("Your account is ready.", { title: "Registration completed" });
         }
         catch (err) {
             const message =
@@ -72,6 +77,7 @@ const Register = () => {
                 "Failed to register";
 
             setError(message);
+            showToast(message, { title: "Registration failed", variant: "danger" });
             console.log(err);
         }
         finally {
@@ -192,6 +198,10 @@ const Register = () => {
                             onSuccess={handleGoogleSuccess}
                             onError={() => {
                                 setError("Google registration failed");
+                                showToast("Google registration failed", {
+                                    title: "Registration failed",
+                                    variant: "danger"
+                                });
                             }}
                         />
                     </div>

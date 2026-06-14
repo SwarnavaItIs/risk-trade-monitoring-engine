@@ -6,6 +6,7 @@ import {
 } from "../api/api";
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
+import useToast from "../hooks/useToast";
 
 const ruleLabels = {
     R11_CUMULATIVE_PORTFOLIO_CONCENTRATION: "R11 Portfolio Concentration",
@@ -25,11 +26,11 @@ const formatNotional = (value) => {
 };
 
 const RiskAudit = () => {
+    const { showToast } = useToast();
     const [results, setResults] = useState([]);
     const [ruleCode, setRuleCode] = useState("");
     const [loading, setLoading] = useState(true);
     const [running, setRunning] = useState(false);
-    const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
     const fetchResults = async (selectedRuleCode = ruleCode) => {
@@ -60,17 +61,21 @@ const RiskAudit = () => {
     const handleRunAudit = async () => {
         try {
             setRunning(true);
-            setMessage("");
             setError("");
 
             const response = await runRiskAudit();
             const findings = response.data.data || [];
 
-            setMessage(`Risk audit completed with ${findings.length} finding${findings.length === 1 ? "" : "s"}.`);
+            showToast(
+                `Risk audit completed with ${findings.length} finding${findings.length === 1 ? "" : "s"}.`,
+                { title: "Risk audit completed" }
+            );
             await fetchResults(ruleCode);
         }
         catch (err) {
-            setError(err.response?.data?.message || "Failed to run risk audit");
+            const message = err.response?.data?.message || "Failed to run risk audit";
+            setError(message);
+            showToast(message, { title: "Risk audit failed", variant: "danger" });
         }
         finally {
             setRunning(false);
@@ -102,12 +107,6 @@ const RiskAudit = () => {
                     </button>
                 )}
             </div>
-
-            {message && (
-                <p className="mb-6 rounded-xl bg-emerald-100 p-4 font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
-                    {message}
-                </p>
-            )}
 
             {error && (
                 <p className="mb-6 rounded-xl bg-red-100 p-4 font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300">

@@ -12,6 +12,7 @@ import {
 import DateTimeInput from "../components/DateTimeInput";
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
+import useToast from "../hooks/useToast";
 import {
     dateTimeLocalToIso,
     formatForDateTimeLocal
@@ -35,6 +36,7 @@ const getPriorityClass = (priority) => {
 
 const AlertDetails = () => {
     const { id } = useParams();
+    const { showToast } = useToast();
     const currentUser = JSON.parse(localStorage.getItem("user"));
     const isAdmin = currentUser?.role === "ADMIN";
 
@@ -58,7 +60,6 @@ const AlertDetails = () => {
     const [updating, setUpdating] = useState(false);
     const [workflowUpdating, setWorkflowUpdating] = useState(false);
     const [error, setError] = useState("");
-    const [updateMessage, setUpdateMessage] = useState("");
 
     const syncAlertState = (nextAlert) => {
         setAlert(nextAlert);
@@ -146,7 +147,6 @@ const AlertDetails = () => {
 
         try {
             setUpdating(true);
-            setUpdateMessage("");
             setError("");
 
             const response = await updateAlertStatus(id, reviewData);
@@ -156,10 +156,14 @@ const AlertDetails = () => {
                 ...currentData,
                 reviewComment: ""
             }));
-            setUpdateMessage("Alert status updated successfully.");
+            showToast("Alert status updated successfully.", {
+                title: "Alert updated"
+            });
         }
         catch (err) {
-            setError(err.response?.data?.message || "Failed to update alert status");
+            const message = err.response?.data?.message || "Failed to update alert status";
+            setError(message);
+            showToast(message, { title: "Update failed", variant: "danger" });
         }
         finally {
             setUpdating(false);
@@ -169,7 +173,6 @@ const AlertDetails = () => {
     const quickUpdateStatus = async (newStatus) => {
         try {
             setUpdating(true);
-            setUpdateMessage("");
             setError("");
 
             const payload = {
@@ -185,10 +188,14 @@ const AlertDetails = () => {
                 status: newStatus,
                 reviewComment: ""
             }));
-            setUpdateMessage(`Alert marked as ${newStatus}.`);
+            showToast(`Alert marked as ${newStatus}.`, {
+                title: "Alert updated"
+            });
         }
         catch (err) {
-            setError(err.response?.data?.message || "Failed to update alert status");
+            const message = err.response?.data?.message || "Failed to update alert status";
+            setError(message);
+            showToast(message, { title: "Update failed", variant: "danger" });
         }
         finally {
             setUpdating(false);
@@ -200,7 +207,6 @@ const AlertDetails = () => {
 
         try {
             setWorkflowUpdating(true);
-            setUpdateMessage("");
             setError("");
 
             const response = await assignAlert(id, {
@@ -213,10 +219,14 @@ const AlertDetails = () => {
             });
 
             syncAlertState(response.data.data);
-            setUpdateMessage(response.data.message);
+            showToast(response.data.message || "Alert assignment updated.", {
+                title: "Assignment updated"
+            });
         }
         catch (err) {
-            setError(err.response?.data?.message || "Failed to update assignment");
+            const message = err.response?.data?.message || "Failed to update assignment";
+            setError(message);
+            showToast(message, { title: "Assignment failed", variant: "danger" });
         }
         finally {
             setWorkflowUpdating(false);
@@ -226,7 +236,6 @@ const AlertDetails = () => {
     const handlePriorityUpdate = async () => {
         try {
             setWorkflowUpdating(true);
-            setUpdateMessage("");
             setError("");
 
             const response = await updateAlertPriority(id, {
@@ -234,10 +243,14 @@ const AlertDetails = () => {
             });
 
             setAlert(response.data.data);
-            setUpdateMessage(response.data.message);
+            showToast(response.data.message || "Alert priority updated.", {
+                title: "Priority updated"
+            });
         }
         catch (err) {
-            setError(err.response?.data?.message || "Failed to update priority");
+            const message = err.response?.data?.message || "Failed to update priority";
+            setError(message);
+            showToast(message, { title: "Priority update failed", variant: "danger" });
         }
         finally {
             setWorkflowUpdating(false);
@@ -249,17 +262,20 @@ const AlertDetails = () => {
 
         try {
             setWorkflowUpdating(true);
-            setUpdateMessage("");
             setError("");
 
             const response = await addAlertComment(id, { comment });
 
             syncAlertState(response.data.data);
             setComment("");
-            setUpdateMessage(response.data.message);
+            showToast(response.data.message || "Comment added.", {
+                title: "Comment added"
+            });
         }
         catch (err) {
-            setError(err.response?.data?.message || "Failed to add comment");
+            const message = err.response?.data?.message || "Failed to add comment";
+            setError(message);
+            showToast(message, { title: "Comment failed", variant: "danger" });
         }
         finally {
             setWorkflowUpdating(false);
@@ -344,12 +360,6 @@ const AlertDetails = () => {
             {(updating || workflowUpdating) && (
                 <div className="mb-6">
                     <LoadingButton text="Updating alert..." />
-                </div>
-            )}
-
-            {updateMessage && (
-                <div className="mb-6 rounded-lg bg-green-50 p-4 font-semibold text-green-700">
-                    {updateMessage}
                 </div>
             )}
 
