@@ -24,6 +24,16 @@ const getExecutablePath = () => {
     return path.join(__dirname, "..", "cpp_risk_engine", executableName);
 };
 
+const getCppEngineStatus = () => {
+    const executablePath = getExecutablePath();
+
+    return {
+        available: fs.existsSync(executablePath),
+        path: executablePath,
+        platform: process.platform
+    };
+};
+
 const getTimeoutMs = () => {
     const configuredTimeout = Number(process.env.CPP_RISK_ENGINE_TIMEOUT_MS);
 
@@ -240,6 +250,7 @@ const runCppRiskEngine = async (trade, recentTrades = [], config = {}) => {
 
 module.exports = {
     buildCppInput,
+    getCppEngineStatus,
     getExecutablePath,
     isCppRiskEngineEnabled,
     runCppRiskEngine

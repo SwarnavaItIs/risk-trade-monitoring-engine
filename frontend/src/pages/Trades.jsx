@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { createTrade, getTrades } from "../api/api";
 
+import DateTimeInput from "../components/DateTimeInput";
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
+import { dateTimeLocalToIso } from "../utils/dateTime";
 
 const initialFormData = {
     traderId: "",
@@ -45,6 +47,7 @@ const Trades = () => {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchTrades();
     }, []);
 
@@ -76,7 +79,7 @@ const Trades = () => {
             };
 
             if (formData.tradeTime) {
-                tradePayload.tradeTime = formData.tradeTime;
+                tradePayload.tradeTime = dateTimeLocalToIso(formData.tradeTime);
             }
 
             const response = await createTrade(tradePayload);
@@ -242,18 +245,13 @@ const Trades = () => {
                         />
                     </div>
 
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
-                            Trade Time Optional
-                        </label>
-                        <input
-                            type="datetime-local"
-                            name="tradeTime"
-                            value={formData.tradeTime}
-                            onChange={handleChange}
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-indigo-500"
-                        />
-                    </div>
+                    <DateTimeInput
+                        label="Trade Time (Optional)"
+                        name="tradeTime"
+                        value={formData.tradeTime}
+                        onChange={handleChange}
+                        helperText="Choose the trade execution date and time."
+                    />
 
                     <div className="flex items-end">
                         <button

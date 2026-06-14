@@ -66,7 +66,9 @@ const RiskRules = () => {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchRules();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleFilterChange = (event) => {
@@ -136,7 +138,7 @@ const RiskRules = () => {
             try {
                 parsedParameters = JSON.parse(editData.parametersText);
             }
-            catch (jsonError) {
+            catch {
                 setError("Parameters must be valid JSON.");
                 return;
             }
@@ -345,7 +347,7 @@ const RiskRules = () => {
                             className="rounded-2xl bg-white p-6 shadow"
                         >
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                <div>
+                                <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <h2 className="text-xl font-bold text-slate-900">
                                             {rule.ruleName}
@@ -377,9 +379,15 @@ const RiskRules = () => {
                                         {rule.ruleCode}
                                     </p>
 
-                                    <p className="mt-3 text-slate-600">
-                                        {rule.description}
-                                    </p>
+                                    <div className="mt-4 max-w-4xl rounded-xl bg-slate-50 p-4 dark:bg-slate-950">
+                                        <p className="text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+                                            What this rule does
+                                        </p>
+
+                                        <p className="mt-2 leading-relaxed text-slate-600 dark:text-slate-300">
+                                            {rule.description}
+                                        </p>
+                                    </div>
                                 </div>
 
                                 {isAdmin && editingRuleId !== rule._id && (
@@ -509,14 +517,14 @@ const RiskRules = () => {
 
                                         <div className="md:col-span-2">
                                             <label className="mb-1 block text-sm font-medium text-slate-700">
-                                                Description
+                                                Description shown to admins and analysts
                                             </label>
 
                                             <textarea
                                                 name="description"
                                                 value={editData.description}
                                                 onChange={handleEditChange}
-                                                rows="3"
+                                                rows="5"
                                                 className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-indigo-500"
                                             />
                                         </div>

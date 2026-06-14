@@ -32,7 +32,10 @@ const auditLogSchema = new mongoose.Schema(
                 "ALERT_COMMENT_ADDED",
                 "ALERT_PRIORITY_UPDATED",
                 "USER_ROLE_UPDATED",
-                "CSV_TRADES_UPLOADED"
+                "CSV_TRADES_UPLOADED",
+                "ORDER_CREATED",
+                "ORDER_CANCELLED",
+                "ORDER_FILLED"
             ],
             required: true
         },
@@ -40,7 +43,7 @@ const auditLogSchema = new mongoose.Schema(
         target: {
             entityType: {
                 type: String,
-                enum: ["RISK_RULE", "ALERT", "USER", "CSV_UPLOAD"],
+                enum: ["RISK_RULE", "ALERT", "USER", "CSV_UPLOAD", "ORDER"],
                 required: true
             },
             entityId: {

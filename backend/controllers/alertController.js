@@ -145,6 +145,7 @@ const getAlerts = async (req, res) => {
         const [alerts, totalAlerts] = await Promise.all([
             Alert.find(alertQuery)
                 .populate("tradeId")
+                .populate("orderId")
                 .populate("assignedTo", "name email role status")
                 .sort({ [sortBy]: sortOrder })
                 .skip(skip)
@@ -180,6 +181,7 @@ const getAlertById = async (req, res) => {
 
         const alert = await Alert.findById(id)
             .populate("tradeId")
+            .populate("orderId")
             .populate("assignedTo", "name email role status");
         if (!alert) {
             return res.status(404).json({
@@ -278,6 +280,7 @@ const updateAlertStatus = async (req, res) => {
 
         const updatedAlert = await Alert.findById(id)
             .populate("tradeId")
+            .populate("orderId")
             .populate("assignedTo", "name email role status");
 
         res.status(200).json({
@@ -432,6 +435,7 @@ const assignAlert = async (req, res) => {
 
         const updatedAlert = await Alert.findById(id)
             .populate("tradeId")
+            .populate("orderId")
             .populate("assignedTo", "name email role status");
 
         res.status(200).json({
@@ -509,6 +513,7 @@ const addAlertComment = async (req, res) => {
 
         const updatedAlert = await Alert.findById(id)
             .populate("tradeId")
+            .populate("orderId")
             .populate("assignedTo", "name email role status");
 
         res.status(200).json({
@@ -574,6 +579,7 @@ const updateAlertPriority = async (req, res) => {
 
         const updatedAlert = await Alert.findById(id)
             .populate("tradeId")
+            .populate("orderId")
             .populate("assignedTo", "name email role status");
 
         res.status(200).json({
@@ -606,6 +612,7 @@ const getAssignedAlerts = async (req, res) => {
         const [alerts, totalAlerts] = await Promise.all([
             Alert.find(alertQuery)
                 .populate("tradeId")
+                .populate("orderId")
                 .populate("assignedTo", "name email role status")
                 .sort({ createdAt: -1 })
                 .skip(skip)

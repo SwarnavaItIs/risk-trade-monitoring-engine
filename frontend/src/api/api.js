@@ -61,6 +61,25 @@ export const createTrade = (tradeData) => {
     return api.post("/trades", tradeData);
 };
 
+//orders
+export const createOrder = (orderData) => {
+    return api.post("/orders", orderData);
+};
+export const getOrders = (filters = {}) => {
+    return api.get("/orders", {
+        params: filters
+    });
+};
+export const getOrderById = (id) => {
+    return api.get(`/orders/${id}`);
+};
+export const cancelOrder = (id) => {
+    return api.put(`/orders/${id}/cancel`);
+};
+export const fillOrder = (id, data = {}) => {
+    return api.put(`/orders/${id}/fill`, data);
+};
+
 //alerts
 export const getAlerts = (filters = {}) => {
     return api.get("/alerts", {
@@ -151,6 +170,20 @@ export const deleteAdminMember = async (memberId) => {
 
 export const getAdminAuditLogs = (filters = {}) => {
     return api.get("/admin/audit-logs", {
+        params: filters
+    });
+};
+
+export const getEngineHealth = () => {
+    return api.get("/system/engine-health");
+};
+
+export const runRiskAudit = () => {
+    return api.post("/risk-audit/run");
+};
+
+export const getRiskAuditResults = (filters = {}) => {
+    return api.get("/risk-audit/results", {
         params: filters
     });
 };

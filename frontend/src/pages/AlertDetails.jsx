@@ -9,8 +9,13 @@ import {
     updateAlertStatus
 } from "../api/api";
 
+import DateTimeInput from "../components/DateTimeInput";
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
+import {
+    dateTimeLocalToIso,
+    formatForDateTimeLocal
+} from "../utils/dateTime";
 
 const getPriorityClass = (priority) => {
     if (priority === "CRITICAL") {
@@ -26,17 +31,6 @@ const getPriorityClass = (priority) => {
     }
 
     return "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300";
-};
-
-const toDateTimeLocalValue = (value) => {
-    if (!value) {
-        return "";
-    }
-
-    const date = new Date(value);
-    const timezoneOffset = date.getTimezoneOffset() * 60 * 1000;
-
-    return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
 };
 
 const AlertDetails = () => {
@@ -74,7 +68,7 @@ const AlertDetails = () => {
                     ? nextAlert.assignedTo?._id || ""
                     : nextAlert.assignedTo || "",
             priority: nextAlert.priority || nextAlert.severity || "MEDIUM",
-            reviewDeadline: toDateTimeLocalValue(nextAlert.reviewDeadline)
+            reviewDeadline: formatForDateTimeLocal(nextAlert.reviewDeadline)
         });
     };
 
@@ -212,9 +206,10 @@ const AlertDetails = () => {
             const response = await assignAlert(id, {
                 assignedTo: assignmentData.assignedTo,
                 priority: assignmentData.priority,
-                reviewDeadline: assignmentData.reviewDeadline
-                    ? new Date(assignmentData.reviewDeadline).toISOString()
-                    : null
+                reviewDeadline: dateTimeLocalToIso(
+                    assignmentData.reviewDeadline,
+                    null
+                )
             });
 
             syncAlertState(response.data.data);
@@ -477,18 +472,13 @@ const AlertDetails = () => {
                                 </select>
                             </div>
 
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Review Deadline
-                                </label>
-                                <input
-                                    type="datetime-local"
-                                    name="reviewDeadline"
-                                    value={assignmentData.reviewDeadline}
-                                    onChange={handleAssignmentChange}
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                                />
-                            </div>
+                            <DateTimeInput
+                                label="Review Deadline"
+                                name="reviewDeadline"
+                                value={assignmentData.reviewDeadline}
+                                onChange={handleAssignmentChange}
+                                helperText="Select the date and time the review should be completed."
+                            />
 
                             <div className="flex flex-wrap gap-3 md:col-span-3">
                                 <button
@@ -627,6 +617,22 @@ const AlertDetails = () => {
                             <p><strong>Price:</strong> INR {alert.tradeId.price}</p>
                             <p><strong>Trade Value:</strong> INR {alert.tradeId.tradeValue?.toLocaleString()}</p>
                             <p><strong>Trade Time:</strong> {new Date(alert.tradeId.tradeTime).toLocaleString()}</p>
+                        </div>
+                    </div>
+                )}
+
+                {alert.orderId && (
+                    <div className="rounded-2xl bg-white p-6 shadow dark:bg-slate-900 lg:col-span-2">
+                        <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Original Order</h3>
+                        <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+                            <p><strong>Order ID:</strong> {alert.orderId.orderId}</p>
+                            <p><strong>Side:</strong> {alert.orderId.side}</p>
+                            <p><strong>Status:</strong> {alert.orderId.status}</p>
+                            <p><strong>Quantity:</strong> {alert.orderId.quantity}</p>
+                            <p><strong>Filled Quantity:</strong> {alert.orderId.filledQuantity}</p>
+                            <p><strong>Price:</strong> INR {alert.orderId.price}</p>
+                            <p><strong>Order Value:</strong> INR {alert.orderId.orderValue?.toLocaleString()}</p>
+                            <p><strong>Submitted:</strong> {new Date(alert.orderId.createdAt).toLocaleString()}</p>
                         </div>
                     </div>
                 )}

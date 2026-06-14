@@ -7,6 +7,7 @@ import ScrollToTop from "./components/ScrollToTop";
 
 import Dashboard from './pages/Dashboard';
 import Trades from './pages/Trades';
+import Orders from "./pages/Orders";
 import Alerts from './pages/Alerts';
 import AlertDetails from './pages/AlertDetails';
 import CsvUpload from "./pages/CsvUpload";
@@ -18,6 +19,8 @@ import ResetPassword from "./pages/ResetPassword";
 import RiskRules from "./pages/RiskRules";
 import Members from "./pages/Members";
 import AuditLogs from "./pages/AuditLogs";
+import SystemHealth from "./pages/SystemHealth";
+import RiskAudit from "./pages/RiskAudit";
 
 const ProtectedLayout = ({ children }) => {
     return (
@@ -31,6 +34,25 @@ const ProtectedLayout = ({ children }) => {
             <BounceIndicator />
         </ProtectedRoute>
     );
+};
+
+const getStoredUser = () => {
+    try {
+        return JSON.parse(localStorage.getItem("user"));
+    }
+    catch {
+        return null;
+    }
+};
+
+const AdminLayout = ({ children }) => {
+    const user = getStoredUser();
+
+    if (user?.role !== "ADMIN") {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return <ProtectedLayout>{children}</ProtectedLayout>;
 };
 
 const App = () => {
@@ -56,6 +78,12 @@ const App = () => {
                 <Route path="/trades" element={
                     <ProtectedLayout>
                         <Trades />
+                    </ProtectedLayout>
+                } />
+
+                <Route path="/orders" element={
+                    <ProtectedLayout>
+                        <Orders />
                     </ProtectedLayout>
                 } />
 
@@ -98,6 +126,24 @@ const App = () => {
                         <ProtectedLayout>
                             <AuditLogs />
                         </ProtectedLayout>
+                    }
+                />
+
+                <Route
+                    path="/admin/system-health"
+                    element={
+                        <AdminLayout>
+                            <SystemHealth />
+                        </AdminLayout>
+                    }
+                />
+
+                <Route
+                    path="/admin/risk-audit"
+                    element={
+                        <AdminLayout>
+                            <RiskAudit />
+                        </AdminLayout>
                     }
                 />
                 

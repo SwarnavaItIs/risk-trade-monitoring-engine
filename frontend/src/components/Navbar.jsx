@@ -40,6 +40,10 @@ const Navbar = () => {
                 Trades
             </Link>
 
+            <Link onClick={closeMenu} className="transition hover:text-blue-300" to="/orders">
+                Orders
+            </Link>
+
             <Link onClick={closeMenu} className="transition hover:text-blue-300" to="/alerts">
                 Alerts
             </Link>
@@ -64,6 +68,14 @@ const Navbar = () => {
 
                     <Link onClick={closeMenu} className="transition hover:text-blue-300" to="/admin/audit-logs">
                         Audit Logs
+                    </Link>
+
+                    <Link onClick={closeMenu} className="transition hover:text-blue-300" to="/admin/system-health">
+                        System Health
+                    </Link>
+
+                    <Link onClick={closeMenu} className="transition hover:text-blue-300" to="/admin/risk-audit">
+                        Risk Audit
                     </Link>
                 </>
             )}

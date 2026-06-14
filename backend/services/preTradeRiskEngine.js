@@ -3,16 +3,7 @@ const { getRulesByTier, buildRuleMap } = require("./dynamicRiskEngine");
 const {
     checkAndStoreDuplicateTrade
 } = require("./redisRiskWindow");
-
-const defaultMarketPrices = {
-    RELIANCE: 2800,
-    TCS: 3500,
-    INFY: 1500,
-    PAYTM: 450,
-    YESBANK: 25,
-    HDFCBANK: 1650,
-    ICICIBANK: 1100
-};
+const { getLatestMarketPrice } = require("./marketDataService");
 
 const getTradeValue = (tradeData) => {
     return Number(tradeData.quantity) * Number(tradeData.price);
@@ -57,14 +48,14 @@ const evaluateSingleOrderValueCap = (tradeData, rule, failedRules) => {
     }
 };
 
-const evaluatePriceCollarCheck = (tradeData, rule, failedRules) => {
+const evaluatePriceCollarCheck = async (tradeData, rule, failedRules) => {
     const symbol = tradeData.stockSymbol?.toUpperCase();
     const orderPrice = Number(tradeData.price);
 
     const maxDeviationPercent = rule.parameters?.maxDeviationPercent || 10;
-    const marketPrices = rule.parameters?.marketPrices || defaultMarketPrices;
 
-    const lastMarketPrice = marketPrices[symbol];
+    const marketData = await getLatestMarketPrice(symbol);
+    const lastMarketPrice = marketData.price;
 
     if (!lastMarketPrice) {
         return;
@@ -77,7 +68,7 @@ const evaluatePriceCollarCheck = (tradeData, rule, failedRules) => {
         addFailedRule(
             failedRules,
             rule,
-            `Order price ${orderPrice} deviates ${deviationPercent.toFixed(2)}% from market price ${lastMarketPrice}`
+            `Order price ${orderPrice} deviates ${deviationPercent.toFixed(2)}% from market price ${lastMarketPrice} (${marketData.source})`
         );
     }
 };
@@ -191,7 +182,7 @@ const evaluatePreTradeRules = async (tradeData) => {
     }
 
     if (ruleMap.R2_PRICE_COLLAR_CHECK) {
-        evaluatePriceCollarCheck(
+        await evaluatePriceCollarCheck(
             tradeData,
             ruleMap.R2_PRICE_COLLAR_CHECK,
             failedRules

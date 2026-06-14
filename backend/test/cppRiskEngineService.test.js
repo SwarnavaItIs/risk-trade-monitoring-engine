@@ -5,6 +5,7 @@ const path = require("path");
 
 const {
     buildCppInput,
+    getCppEngineStatus,
     getExecutablePath
 } = require("../services/cppRiskEngineService");
 
@@ -13,6 +14,14 @@ test("C++ risk engine path resolves to the existing cpp_risk_engine directory", 
 
     assert.equal(path.basename(path.dirname(executablePath)), "cpp_risk_engine");
     assert.equal(fs.existsSync(executablePath), true);
+});
+
+test("C++ risk engine status reflects executable availability", () => {
+    const status = getCppEngineStatus();
+
+    assert.equal(status.available, fs.existsSync(status.path));
+    assert.equal(status.path, getExecutablePath());
+    assert.equal(status.platform, process.platform);
 });
 
 test("C++ risk engine input uses the expected line protocol", () => {

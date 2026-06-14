@@ -5,7 +5,13 @@ const alertSchema = new mongoose.Schema(
         tradeId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Trade",
-            required: true
+            default: null
+        },
+
+        orderId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Order",
+            default: null
         },
 
         traderId: {
@@ -141,5 +147,11 @@ const alertSchema = new mongoose.Schema(
 
 alertSchema.index({ assignedTo: 1, status: 1, createdAt: -1 });
 alertSchema.index({ priority: 1, createdAt: -1 });
+
+alertSchema.pre("validate", function () {
+    if (!this.tradeId && !this.orderId) {
+        this.invalidate("tradeId", "Alert must reference a trade or an order");
+    }
+});
 
 module.exports = mongoose.model("Alert", alertSchema);

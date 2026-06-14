@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
 
+const requiredForTradeEvent = function () {
+    return this.eventType !== "AUDIT_TRIGGERED";
+};
+
 const riskEventSchema = new mongoose.Schema(
     {
         eventType: {
@@ -43,17 +47,20 @@ const riskEventSchema = new mongoose.Schema(
 
         traderId: {
             type: String,
-            required: true
+            default: "",
+            required: requiredForTradeEvent
         },
 
         traderName: {
             type: String,
-            required: true
+            default: "",
+            required: requiredForTradeEvent
         },
 
         stockSymbol: {
             type: String,
-            required: true,
+            default: "",
+            required: requiredForTradeEvent,
             uppercase: true,
             trim: true
         },
@@ -61,17 +68,18 @@ const riskEventSchema = new mongoose.Schema(
         tradeType: {
             type: String,
             enum: ["BUY", "SELL"],
-            required: true
+            default: null,
+            required: requiredForTradeEvent
         },
 
         quantity: {
             type: Number,
-            required: true
+            required: requiredForTradeEvent
         },
 
         price: {
             type: Number,
-            required: true
+            required: requiredForTradeEvent
         },
 
         tradeValue: {
@@ -82,6 +90,12 @@ const riskEventSchema = new mongoose.Schema(
         tradeId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Trade",
+            default: null
+        },
+
+        orderId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Order",
             default: null
         },
 

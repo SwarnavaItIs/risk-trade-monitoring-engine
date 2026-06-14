@@ -1,5 +1,7 @@
 # Risk Trade Monitoring Engine
 
+[![CI](https://github.com/SwarnavaItIs/risk-trade-monitoring-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/SwarnavaItIs/risk-trade-monitoring-engine/actions/workflows/ci.yml)
+
 A full-stack trade surveillance and pre-trade risk control platform that monitors trading activity, blocks risky trades before execution, generates explainable alerts, and provides admin-configurable risk rules with auditability and analyst workflows.
 
 This project is designed like a simplified financial risk monitoring system inspired by real-world market access controls, trade surveillance systems, and compliance workflows.
@@ -21,6 +23,25 @@ The Risk Trade Monitoring Engine allows users to submit trades manually or throu
 3. **Risk events and audit logs** track blocked trades, triggered rules, alert actions, and admin changes.
 4. **Admin dashboards** allow risk rule configuration, member management, and audit review.
 5. **Analyst workflows** allow alert investigation, assignment, comments, and status updates.
+6. **Order lifecycle monitoring** tracks submitted, cancelled, partially filled, and filled orders.
+7. **Post-trade audits** detect portfolio concentration and unusually fast capital usage.
+
+---
+
+## Recent Project Improvements
+
+* Added a complete order lifecycle with create, cancel, fill, filtering, audit logging, and an Orders page.
+* Activated R9 order-to-trade ratio detection using cancellation and fill activity.
+* Improved R7 wash-trade detection with quantity and price similarity tolerances.
+* Improved R8 momentum-ignition checks with minimum notional and optional price-direction validation.
+* Added configurable R10 restricted-symbol and after-hours behavior while preserving alert-only behavioral flow.
+* Added R11/R12 post-trade audit execution and an admin-only Risk Audit page.
+* Added alert assignment, priority, review deadlines, comment history, and a My Alerts workflow.
+* Added Redis connection visibility, C++ executable health checks, and an admin System Health page.
+* Added R2 market-price lookup through Redis cache, Finnhub, and static fallback prices.
+* Added native calendar and time pickers for manual trade times and alert review deadlines.
+* Added clear, beginner-friendly R1-R12 descriptions in the Risk Rules UI.
+* Added GitHub Actions CI for backend tests, Linux C++ compilation, C++ verification, and frontend builds.
 
 ---
 
@@ -51,6 +72,8 @@ The Risk Trade Monitoring Engine allows users to submit trades manually or throu
 * Redis for rolling-window risk checks
 * C++17 behavioral risk engine
 * JavaScript fallback risk engine
+* Finnhub/static reference-price market data service
+* MongoDB aggregation-based post-trade audit runner
 
 ### Deployment
 
@@ -78,9 +101,19 @@ The Risk Trade Monitoring Engine allows users to submit trades manually or throu
 * Add trades manually
 * Upload trades using CSV
 * Drag-and-drop CSV upload UI
+* Select optional trade execution time using a native calendar and time picker
 * Validate trade fields before saving
 * Show accepted trades and blocked trade feedback
 * Display failed CSV rows with failed rule details
+
+### Order Lifecycle Management
+
+* Create submitted orders without replacing the existing Trade model
+* Track `SUBMITTED`, `PARTIALLY_FILLED`, `FILLED`, and `CANCELLED` states
+* Fill or cancel active orders
+* Filter orders by status, trader, symbol, and side
+* Record order creation, fill, and cancellation actions in audit logs
+* Evaluate R9 cancellation-to-fill behavior after lifecycle changes
 
 ### Dynamic Risk Rule Engine
 
@@ -92,7 +125,7 @@ Rules are divided into three tiers:
 | ---------- | -------------------------------------------- |
 | PRE_TRADE  | Blocks invalid or risky trades before saving |
 | BEHAVIORAL | Generates alerts after accepted trades       |
-| POST_TRADE | Supports background audit-style analytics    |
+| POST_TRADE | Runs admin-triggered audit-style analytics    |
 
 ### Pre-Trade Hard Block Rules
 
@@ -113,10 +146,21 @@ These rules can block trades before database insertion.
 | R6   | High-Frequency Velocity                 |
 | R7   | Wash Trade Detection                    |
 | R8   | Momentum Ignition                       |
-| R9   | Order-to-Trade Ratio placeholder        |
+| R9   | Order-to-Trade Ratio                    |
 | R10  | After-Hours / Restricted Symbol Trading |
 
 These rules generate explainable alerts.
+
+R7 compares opposite-side trade quantity and price similarity. R8 requires a configurable minimum total notional and can optionally verify price direction. R9 uses real order lifecycle data.
+
+### Post-Trade Audit Rules
+
+| Rule | Description                        |
+| ---- | ---------------------------------- |
+| R11  | Cumulative Portfolio Concentration |
+| R12  | Aggregate Capital Burn Rate        |
+
+Admins can run these rules from the Risk Audit page. Findings are stored as `AUDIT_TRIGGERED` risk events and remain available in the results table.
 
 ### Redis Risk Checks
 
@@ -125,18 +169,32 @@ Redis is used for real-time rolling-window checks:
 * Duplicate order detection
 * High-frequency trade velocity
 * Momentum ignition detection
+* Latest market-price caching with a 60-second TTL
 
-If Redis is unavailable, the backend falls back to MongoDB-based checks.
+If Redis is unavailable, rolling-window risk checks fall back to MongoDB where supported, while market-price lookup continues through Finnhub and static reference prices.
 
 ### C++ Risk Engine
 
-A C++17 engine performs low-latency behavioral risk checks for:
+A C++17 engine supports low-latency behavioral risk checks for:
 
 * High-frequency velocity
 * Wash trade detection
 * Momentum ignition
 
-The Node.js backend calls the C++ executable through child processes. If the C++ engine is unavailable, the system safely falls back to JavaScript/Redis logic.
+The Node.js backend calls the C++ executable through child processes. Enhanced quantity, price, notional, and direction validation for R7/R8 is applied by the JavaScript behavioral layer so results remain consistent. If the C++ engine is unavailable, the system safely falls back to JavaScript/Redis logic.
+
+### Market Data for R2
+
+The R2 Price Collar Check resolves the latest reference price through this fallback chain:
+
+```txt
+Redis cache -> Finnhub quote API -> Static reference price -> Unavailable
+```
+
+* Redis prices use keys such as `market:last-price:TCS` with a 60-second TTL.
+* Finnhub is optional and only used when `MARKET_DATA_PROVIDER=FINNHUB` and an API key are configured.
+* Missing Redis or Finnhub access does not stop trade evaluation.
+* R2 reasons include the market-data source used for the comparison.
 
 ### Alert Management
 
@@ -149,6 +207,7 @@ The Node.js backend calls the C++ executable through child processes. If the C++
 * Update alert status
 * Update alert priority
 * View “My Alerts” assigned to the logged-in user
+* Select review deadlines using a native calendar and time picker
 
 ### Admin Features
 
@@ -156,11 +215,13 @@ The Node.js backend calls the C++ executable through child processes. If the C++
 * Enable/disable risk rules
 * Update thresholds and parameters
 * Edit severity, risk weight, and action
-* Reset/customize risk rules
+* Edit clear R1-R12 descriptions, thresholds, and parameters
 * Admin member management
 * Promote/demote users
 * Remove users
 * Audit log review
+* Run R11/R12 post-trade audits
+* Review Redis, C++, market-data, and fallback health
 
 ### Analytics Dashboard
 
@@ -194,6 +255,7 @@ The dashboard includes:
 * Logout overlay with blurred background
 * Scroll-to-top route behavior
 * Clean admin and analyst workflows
+* Native browser calendar and clock pickers for date-time fields
 
 ---
 
@@ -226,17 +288,36 @@ Behavioral Risk Engine
     |
     |-- Redis rolling-window checks
     |-- C++ risk engine
-    |-- JavaScript fallback
+    |-- Enhanced JavaScript checks and fallback
     |
     v
 Alert Generation + RiskEvent Logging
 
+Order Lifecycle
+    |
+    |-- Submit / Fill / Cancel
+    |-- R9 cancellation-to-fill evaluation
+    |
+    v
+Order Alert + Audit Logging
+
+Admin Post-Trade Audit
+    |
+    |-- R11 portfolio concentration
+    |-- R12 capital burn rate
+    |
+    v
+AUDIT_TRIGGERED RiskEvents
+
 Admin / Analyst UI
     |
     |-- Risk Rules
+    |-- Orders
     |-- Alerts
     |-- Assignments
     |-- Audit Logs
+    |-- Risk Audit
+    |-- System Health
     |-- Analytics
 ```
 
@@ -446,13 +527,14 @@ Fetch recent trades
 Try C++ risk engine
     |
     |-- If C++ works:
-    |       Use C++ result for R6/R7/R8
+    |       Use C++ result for supported low-latency checks
     |
     |-- If C++ fails:
     |       Use Redis / JavaScript fallback
     |
     v
-Run JS-only rules like R10
+Apply enhanced JavaScript R7/R8 checks
+Run order-aware R9 and configurable R10 checks
     |
     v
 Calculate risk score and severity
@@ -517,13 +599,13 @@ Builds input payload
 Spawns C++ executable
     |
     v
-C++ calculates R6/R7/R8
+C++ calculates supported behavioral candidates
     |
     v
 C++ returns JSON result
     |
     v
-Node.js merges result with remaining JS rules
+Node.js merges the result with enhanced R7/R8 and remaining JS rules
 ```
 
 If C++ fails:
@@ -571,7 +653,52 @@ Alert workflow supports:
 
 ---
 
-### 10. Risk Rule Management Workflow
+### 10. Order Lifecycle Workflow
+
+```txt
+Admin or analyst creates an order
+    |
+    v
+Order stored as SUBMITTED
+    |
+    |-- Fill -> FILLED or PARTIALLY_FILLED
+    |-- Cancel -> CANCELLED
+    |
+    v
+R9 evaluates cancellation-to-fill ratio
+    |
+    v
+Alert and RiskEvent generated if the configured ratio is exceeded
+```
+
+Orders and trades coexist. Filling an order updates the order lifecycle; it does not replace the existing manual/CSV Trade workflow.
+
+---
+
+### 11. Post-Trade Audit and System Health Workflow
+
+Admins can run R11/R12 from `/admin/risk-audit`:
+
+```txt
+Admin runs audit
+    |
+    |-- R11 checks each trader's daily symbol concentration
+    |-- R12 checks each trader's last-hour capital usage
+    |
+    v
+AUDIT_TRIGGERED RiskEvents are stored and shown in the results table
+```
+
+The `/admin/system-health` page reports:
+
+* Redis enabled and connected status
+* C++ executable availability and resolved path
+* Configured market-data provider
+* Redis, C++, and market-data fallback strategies
+
+---
+
+### 12. Risk Rule Management Workflow
 
 ```txt
 Admin opens Risk Rules page
@@ -596,7 +723,7 @@ This makes the risk engine dynamic and configurable.
 
 ---
 
-### 11. Audit Log Workflow
+### 13. Audit Log Workflow
 
 ```txt
 Important action happens
@@ -624,10 +751,11 @@ Tracked actions include:
 * Alert status updates
 * Alert priority updates
 * Admin/member actions
+* Order creation, cancellation, and fill actions
 
 ---
 
-### 12. Dashboard Analytics Workflow
+### 14. Dashboard Analytics Workflow
 
 ```txt
 RiskEvent and Alert data
@@ -672,6 +800,11 @@ REDIS_URL=redis://localhost:6379
 
 MARKET_DATA_PROVIDER=FINNHUB
 FINNHUB_API_KEY=your_finnhub_api_key
+
+CPP_RISK_ENGINE_ENABLED=true
+CPP_RISK_ENGINE_PATH=
+CPP_RISK_ENGINE_TIMEOUT_MS=2000
+CPP_RISK_ENGINE_LOG_SUCCESS=false
 ```
 
 Create a `.env` file inside `frontend`.
@@ -708,7 +841,7 @@ npm install
 
 ### 4. Start Redis locally
 
-Using Docker:
+Redis is optional because MongoDB/JavaScript fallbacks are built in. To enable the faster rolling-window and market-data cache paths, start Redis using Docker:
 
 ```bash
 docker run --name risk-redis -p 6379:6379 -d redis
@@ -726,6 +859,8 @@ docker start risk-redis
 cd backend
 npm run seed:risk-rules
 ```
+
+The seeder updates rules by unique `ruleCode` using upserts, so rerunning it refreshes defaults without creating duplicate rules. MongoDB Atlas must allow the current machine's IP address.
 
 ### 6. Build C++ engine locally
 
@@ -775,9 +910,11 @@ http://localhost:5000
 ```bash
 npm run dev
 npm start
+npm test
 npm run seed:risk-rules
 npm run build:cpp:win
 npm run build:cpp:linux
+npm run check:cpp
 ```
 
 ### Frontend
@@ -785,6 +922,7 @@ npm run build:cpp:linux
 ```bash
 npm run dev
 npm run build
+npm run lint
 ```
 
 ---
@@ -810,7 +948,7 @@ POST /api/auth/login
 POST /api/auth/google
 GET  /api/auth/me
 POST /api/auth/forgot-password
-PUT  /api/auth/reset-password/:token
+POST /api/auth/reset-password
 ```
 
 ### Trades
@@ -822,6 +960,16 @@ POST   /api/trades/upload
 GET    /api/trades/:id
 PUT    /api/trades/:id
 DELETE /api/trades/:id
+```
+
+### Orders
+
+```txt
+POST /api/orders
+GET  /api/orders
+GET  /api/orders/:id
+PUT  /api/orders/:id/cancel
+PUT  /api/orders/:id/fill
 ```
 
 ### Alerts
@@ -850,17 +998,67 @@ PUT /api/risk-rules/:id
 GET /api/dashboard/summary
 GET /api/dashboard/alerts-by-severity
 GET /api/dashboard/alerts-by-type
+GET /api/dashboard/top-risky-traders
+GET /api/dashboard/top-traded-stocks
 GET /api/dashboard/risk-trend
 GET /api/dashboard/rule-trigger-summary
 GET /api/dashboard/blocked-trade-summary
 GET /api/dashboard/recent-risk-events
 ```
 
-### Audit Logs
+### Admin
 
 ```txt
-GET /api/audit-logs
+GET    /api/admin/members
+PATCH  /api/admin/members/:id/role
+DELETE /api/admin/members/:id
+GET    /api/admin/audit-logs
 ```
+
+### Risk Audit
+
+```txt
+POST /api/risk-audit/run
+GET  /api/risk-audit/results
+```
+
+### System Health
+
+```txt
+GET /api/system/engine-health
+GET /api/system/market-price/:symbol
+```
+
+The Risk Audit and System Health endpoints are ADMIN-only.
+
+---
+
+## Testing and Continuous Integration
+
+Backend tests use Node's built-in test runner and cover risk rules, alert assignment, order lifecycle, audit generation, market data, Redis/C++ status behavior, and protected system routes.
+
+```bash
+cd backend
+npm test
+npm run check:cpp
+```
+
+Frontend verification:
+
+```bash
+cd frontend
+npm run lint
+npm run build
+```
+
+GitHub Actions runs on pushes and pull requests to `main`:
+
+* Installs backend and frontend dependencies with Node.js 20
+* Compiles the C++ engine on Ubuntu
+* Verifies the C++ executable
+* Runs backend tests
+* Builds the frontend
+* Uses safe CI-only environment values and does not require Redis or Finnhub
 
 ---
 
@@ -896,6 +1094,10 @@ FRONTEND_URL=https://your-vercel-url.vercel.app
 GOOGLE_CLIENT_ID=...
 ADMIN_REGISTRATION_SECRET=...
 REDIS_URL=...
+MARKET_DATA_PROVIDER=FINNHUB
+FINNHUB_API_KEY=...
+CPP_RISK_ENGINE_ENABLED=true
+CPP_RISK_ENGINE_PATH=cpp_risk_engine/risk_engine
 ```
 
 ### Frontend on Vercel

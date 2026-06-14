@@ -33,10 +33,11 @@ const authRoutes = require("./routes/authRoutes");
 const alertRoutes = require("./routes/alertRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const tradeRoutes = require("./routes/tradeRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 const riskRuleRoutes = require("./routes/riskRuleRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-
-
+const systemRoutes = require("./routes/systemRoutes");
+const riskAuditRoutes = require("./routes/riskAuditRoutes");
 
 app.get("/", (req, res) => {
     res.send("Risk Trade Monitoring Engine Backend Running");
@@ -45,10 +46,13 @@ app.get("/", (req, res) => {
 app.use("/api/test", testRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/trades", protect, tradeRoutes);
+app.use("/api/orders", protect, orderRoutes);
 app.use("/api/alerts", protect, alertRoutes);
 app.use("/api/dashboard", protect,  dashboardRoutes);
 app.use("/api/risk-rules", protect, riskRuleRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/system", protect, systemRoutes);
+app.use("/api/risk-audit", protect, riskAuditRoutes);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

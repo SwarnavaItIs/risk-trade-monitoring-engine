@@ -109,6 +109,9 @@ const AuditLogs = () => {
                     <option value="ALERT_PRIORITY_UPDATED">Alert priority updated</option>
                     <option value="USER_ROLE_UPDATED">User role updated</option>
                     <option value="CSV_TRADES_UPLOADED">CSV trades uploaded</option>
+                    <option value="ORDER_CREATED">Order created</option>
+                    <option value="ORDER_CANCELLED">Order cancelled</option>
+                    <option value="ORDER_FILLED">Order filled</option>
                 </select>
 
                 <select
@@ -133,6 +136,7 @@ const AuditLogs = () => {
                     <option value="ALERT">Alert</option>
                     <option value="USER">User</option>
                     <option value="CSV_UPLOAD">CSV upload</option>
+                    <option value="ORDER">Order</option>
                 </select>
 
                 <div className="flex gap-2">

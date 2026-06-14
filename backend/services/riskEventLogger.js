@@ -60,7 +60,37 @@ const logAlertRuleEvents = async ({ trade, alert, riskResult }) => {
     }
 };
 
+const logOrderAlertRuleEvents = async ({ order, alert, riskResult }) => {
+    const events = riskResult.ruleDetails.map((rule) => ({
+        eventType: "ALERT_TRIGGERED",
+        ruleCode: rule.ruleCode,
+        ruleName: rule.ruleName,
+        tier: "BEHAVIORAL",
+        action: rule.action || "ALERT",
+        severity: rule.severity || riskResult.severity,
+        riskWeight: rule.riskWeight || 0,
+
+        traderId: order.traderId,
+        traderName: order.traderName,
+        stockSymbol: order.stockSymbol,
+        tradeType: order.side,
+        quantity: Number(order.quantity),
+        price: Number(order.price),
+        tradeValue: Number(order.orderValue || order.quantity * order.price),
+
+        tradeId: null,
+        orderId: order._id,
+        alertId: alert._id,
+        reason: rule.reason
+    }));
+
+    if (events.length > 0) {
+        await RiskEvent.insertMany(events);
+    }
+};
+
 module.exports = {
     logBlockedTradeEvents,
-    logAlertRuleEvents
+    logAlertRuleEvents,
+    logOrderAlertRuleEvents
 };

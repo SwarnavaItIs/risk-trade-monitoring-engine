@@ -69,3 +69,35 @@ test("audit log accepts alert workflow actions", async () => {
         await auditLog.validate();
     }
 });
+
+test("alert accepts an order reference without a trade reference", async () => {
+    const alert = buildAlert({
+        tradeId: null,
+        orderId: "507f1f77bcf86cd799439013"
+    });
+
+    await alert.validate();
+
+    assert.equal(alert.tradeId, null);
+    assert.equal(alert.orderId.toString(), "507f1f77bcf86cd799439013");
+});
+
+test("audit log accepts order lifecycle actions", async () => {
+    for (const action of ["ORDER_CREATED", "ORDER_CANCELLED", "ORDER_FILLED"]) {
+        const auditLog = new AuditLog({
+            actor: {
+                userId: "507f1f77bcf86cd799439011",
+                name: "Admin User",
+                email: "admin@example.com",
+                role: "ADMIN"
+            },
+            action,
+            target: {
+                entityType: "ORDER",
+                entityId: "507f1f77bcf86cd799439013"
+            }
+        });
+
+        await auditLog.validate();
+    }
+});
