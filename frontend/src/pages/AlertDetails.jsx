@@ -6,7 +6,9 @@ import {
     getAdminMembers,
     getAlertById,
     updateAlertPriority,
-    updateAlertStatus
+    updateAlertStatus,
+    explainAlertWithAI,
+    generateInvestigationSummary
 } from "../api/api";
 
 import DateTimeInput from "../components/DateTimeInput";
@@ -34,10 +36,43 @@ const getPriorityClass = (priority) => {
     return "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300";
 };
 
+const getStoredUser = () => {
+    try {
+        return JSON.parse(localStorage.getItem("user")) || null;
+    }
+    catch {
+        return null;
+    }
+};
+
+const isRecord = (value) => {
+    return value && typeof value === "object";
+};
+
+const formatDateTime = (dateValue) => {
+    if (!dateValue) {
+        return "Not available";
+    }
+
+    const date = new Date(dateValue);
+
+    return Number.isNaN(date.getTime())
+        ? "Not available"
+        : date.toLocaleString();
+};
+
+const formatCurrency = (value) => {
+    if (value === undefined || value === null || Number.isNaN(Number(value))) {
+        return "Not available";
+    }
+
+    return `INR ${Number(value).toLocaleString()}`;
+};
+
 const AlertDetails = () => {
     const { id } = useParams();
     const { showToast } = useToast();
-    const currentUser = JSON.parse(localStorage.getItem("user"));
+    const currentUser = getStoredUser();
     const isAdmin = currentUser?.role === "ADMIN";
 
     const [alert, setAlert] = useState(null);
@@ -61,7 +96,19 @@ const AlertDetails = () => {
     const [workflowUpdating, setWorkflowUpdating] = useState(false);
     const [error, setError] = useState("");
 
+    const [aiExplanation, setAiExplanation] = useState("");
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState("");
+
+    const [investigationSummary, setInvestigationSummary] = useState("");
+    const [summaryLoading, setSummaryLoading] = useState(false);
+    const [summaryError, setSummaryError] = useState("");
+
     const syncAlertState = (nextAlert) => {
+        if (!nextAlert) {
+            return;
+        }
+
         setAlert(nextAlert);
         setAssignmentData({
             assignedTo:
@@ -81,6 +128,10 @@ const AlertDetails = () => {
             const nextAlert = response.data.data;
 
             syncAlertState(nextAlert);
+            setAiExplanation("");
+            setAiError("");
+            setInvestigationSummary("");
+            setSummaryError("");
             setReviewData({
                 status: nextAlert.status || "UNDER_REVIEW",
                 reviewComment: "",
@@ -150,10 +201,13 @@ const AlertDetails = () => {
             setError("");
 
             const response = await updateAlertStatus(id, reviewData);
+            const updatedAlert = response.data.data;
 
-            setAlert(response.data.data);
+            syncAlertState(updatedAlert);
             setReviewData((currentData) => ({
                 ...currentData,
+                status: updatedAlert?.status || currentData.status,
+                reviewedBy: updatedAlert?.reviewedBy || currentData.reviewedBy,
                 reviewComment: ""
             }));
             showToast("Alert status updated successfully.", {
@@ -181,11 +235,13 @@ const AlertDetails = () => {
             };
 
             const response = await updateAlertStatus(id, payload);
+            const updatedAlert = response.data.data;
 
-            setAlert(response.data.data);
+            syncAlertState(updatedAlert);
             setReviewData((currentData) => ({
                 ...currentData,
-                status: newStatus,
+                status: updatedAlert?.status || newStatus,
+                reviewedBy: updatedAlert?.reviewedBy || currentData.reviewedBy,
                 reviewComment: ""
             }));
             showToast(`Alert marked as ${newStatus}.`, {
@@ -242,7 +298,7 @@ const AlertDetails = () => {
                 priority: assignmentData.priority
             });
 
-            setAlert(response.data.data);
+            syncAlertState(response.data.data);
             showToast(response.data.message || "Alert priority updated.", {
                 title: "Priority updated"
             });
@@ -314,6 +370,51 @@ const AlertDetails = () => {
         return "bg-amber-100 text-amber-700";
     };
 
+    const handleExplainAlert = async () => {
+        if (!alert?._id) {
+            return;
+        }
+
+        try {
+            setAiLoading(true);
+            setAiError("");
+            setAiExplanation("");
+
+            const response = await explainAlertWithAI(alert._id);
+            const explanation = response.data?.data?.explanation;
+
+            if (!explanation) {
+                throw new Error("AI response did not include an explanation");
+            }
+
+            setAiExplanation(explanation);
+            showToast(response.data.message || "AI explanation generated successfully.", {
+                title: "Explanation ready",
+                variant: "info"
+            });
+        }
+        catch (err) {
+            const message =
+                err.response?.data?.message ||
+                err.message ||
+                "Failed to generate AI explanation";
+            const fallbackExplanation = err.response?.data?.data?.explanation;
+
+            setAiError(message);
+            if (fallbackExplanation) {
+                setAiExplanation(fallbackExplanation);
+            }
+            showToast(message, {
+                title: "AI explanation failed",
+                variant: "danger"
+            });
+            console.log(err);
+        }
+        finally {
+            setAiLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-100 p-8 dark:bg-slate-950">
@@ -324,6 +425,50 @@ const AlertDetails = () => {
             </div>
         );
     }
+
+    const handleGenerateInvestigationSummary = async () => {
+        if (!alert?._id) {
+            return;
+        }
+
+        try {
+            setSummaryLoading(true);
+            setSummaryError("");
+            setInvestigationSummary("");
+
+            const response = await generateInvestigationSummary(alert._id);
+            const summary = response.data?.data?.summary;
+
+            if (!summary) {
+                throw new Error("AI response did not include an investigation summary");
+            }
+
+            setInvestigationSummary(summary);
+            showToast(response.data.message || "AI investigation summary generated successfully.", {
+                title: "Summary ready",
+                variant: "info"
+            });
+        }
+        catch (err) {
+            const message =
+                err.response?.data?.message ||
+                err.message ||
+                "Failed to generate investigation summary";
+            const fallbackSummary = err.response?.data?.data?.summary;
+
+            setSummaryError(message);
+            if (fallbackSummary) {
+                setInvestigationSummary(fallbackSummary);
+            }
+            showToast(message, {
+                title: "Summary failed",
+                variant: "danger"
+            });
+        }
+        finally {
+            setSummaryLoading(false);
+        }
+    };
 
     if (error && !alert) {
         return (
@@ -341,6 +486,8 @@ const AlertDetails = () => {
 
     const priority = alert.priority || alert.severity || "MEDIUM";
     const comments = [...(alert.commentHistory || [])].reverse();
+    const trade = isRecord(alert.tradeId) ? alert.tradeId : null;
+    const order = isRecord(alert.orderId) ? alert.orderId : null;
 
     return (
         <div className="min-h-screen bg-slate-100 p-8 dark:bg-slate-950">
@@ -395,7 +542,7 @@ const AlertDetails = () => {
                                 {alert.status}
                             </span>
                         </p>
-                        <p><strong>Created:</strong> {new Date(alert.createdAt).toLocaleString()}</p>
+                        <p><strong>Created:</strong> {formatDateTime(alert.createdAt)}</p>
                     </div>
                 </div>
 
@@ -409,7 +556,7 @@ const AlertDetails = () => {
                         <p><strong>Stock:</strong> {alert.stockSymbol}</p>
                         {alert.reviewedBy && <p><strong>Reviewed By:</strong> {alert.reviewedBy}</p>}
                         {alert.reviewedAt && (
-                            <p><strong>Reviewed At:</strong> {new Date(alert.reviewedAt).toLocaleString()}</p>
+                            <p><strong>Reviewed At:</strong> {formatDateTime(alert.reviewedAt)}</p>
                         )}
                         {alert.reviewComment && <p><strong>Latest Review Comment:</strong> {alert.reviewComment}</p>}
                     </div>
@@ -438,7 +585,7 @@ const AlertDetails = () => {
                             <p className="text-xs font-semibold uppercase text-slate-500">Review Deadline</p>
                             <p className="mt-1 font-semibold text-slate-900 dark:text-white">
                                 {alert.reviewDeadline
-                                    ? new Date(alert.reviewDeadline).toLocaleString()
+                                    ? formatDateTime(alert.reviewDeadline)
                                     : "No deadline"}
                             </p>
                         </div>
@@ -542,7 +689,7 @@ const AlertDetails = () => {
                                         <p className="text-sm text-slate-700 dark:text-slate-300">{entry.comment}</p>
                                         <p className="mt-2 text-xs text-slate-500">
                                             {entry.commentedBy} ({entry.commentedByRole}) | {entry.commentedByEmail} |{" "}
-                                            {new Date(entry.createdAt).toLocaleString()}
+                                            {formatDateTime(entry.createdAt)}
                                         </p>
                                     </div>
                                 ))}
@@ -618,35 +765,110 @@ const AlertDetails = () => {
                     </ul>
                 </div>
 
-                {alert.tradeId && (
+                {trade && (
                     <div className="rounded-2xl bg-white p-6 shadow dark:bg-slate-900 lg:col-span-2">
                         <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Original Trade</h3>
                         <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
-                            <p><strong>Trade Type:</strong> {alert.tradeId.tradeType}</p>
-                            <p><strong>Quantity:</strong> {alert.tradeId.quantity}</p>
-                            <p><strong>Price:</strong> INR {alert.tradeId.price}</p>
-                            <p><strong>Trade Value:</strong> INR {alert.tradeId.tradeValue?.toLocaleString()}</p>
-                            <p><strong>Trade Time:</strong> {new Date(alert.tradeId.tradeTime).toLocaleString()}</p>
+                            <p><strong>Trade Type:</strong> {trade.tradeType}</p>
+                            <p><strong>Quantity:</strong> {trade.quantity}</p>
+                            <p><strong>Price:</strong> {formatCurrency(trade.price)}</p>
+                            <p><strong>Trade Value:</strong> {formatCurrency(trade.tradeValue)}</p>
+                            <p><strong>Trade Time:</strong> {formatDateTime(trade.tradeTime)}</p>
                         </div>
                     </div>
                 )}
 
-                {alert.orderId && (
+                {order && (
                     <div className="rounded-2xl bg-white p-6 shadow dark:bg-slate-900 lg:col-span-2">
                         <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Original Order</h3>
                         <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
-                            <p><strong>Order ID:</strong> {alert.orderId.orderId}</p>
-                            <p><strong>Side:</strong> {alert.orderId.side}</p>
-                            <p><strong>Status:</strong> {alert.orderId.status}</p>
-                            <p><strong>Quantity:</strong> {alert.orderId.quantity}</p>
-                            <p><strong>Filled Quantity:</strong> {alert.orderId.filledQuantity}</p>
-                            <p><strong>Price:</strong> INR {alert.orderId.price}</p>
-                            <p><strong>Order Value:</strong> INR {alert.orderId.orderValue?.toLocaleString()}</p>
-                            <p><strong>Submitted:</strong> {new Date(alert.orderId.createdAt).toLocaleString()}</p>
+                            <p><strong>Order ID:</strong> {order.orderId}</p>
+                            <p><strong>Side:</strong> {order.side}</p>
+                            <p><strong>Status:</strong> {order.status}</p>
+                            <p><strong>Quantity:</strong> {order.quantity}</p>
+                            <p><strong>Filled Quantity:</strong> {order.filledQuantity}</p>
+                            <p><strong>Price:</strong> {formatCurrency(order.price)}</p>
+                            <p><strong>Order Value:</strong> {formatCurrency(order.orderValue)}</p>
+                            <p><strong>Submitted:</strong> {formatDateTime(order.createdAt)}</p>
                         </div>
                     </div>
                 )}
             </div>
+
+            <div className="mt-6 rounded-2xl bg-white p-6 shadow dark:bg-slate-900">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                            AI Alert Explanation
+                        </h2>
+
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                            Generate a plain-English explanation of why this alert was triggered and what an analyst should review next.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleExplainAlert}
+                        disabled={aiLoading || !alert?._id}
+                        className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white shadow transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                        {aiLoading ? "Generating..." : "Explain Alert with AI"}
+                    </button>
+                </div>
+
+                {aiError && (
+                    <div className="mt-4 rounded-lg bg-red-50 p-4 font-semibold text-red-700">
+                        {aiError}
+                    </div>
+                )}
+
+                {aiExplanation && (
+                    <div className="mt-5 rounded-xl border border-indigo-100 bg-indigo-50/70 p-5 dark:border-indigo-500/30 dark:bg-indigo-500/10">
+                        <pre className="whitespace-pre-wrap font-sans text-sm leading-6 text-slate-800 dark:text-slate-100">
+                            {aiExplanation}
+                        </pre>
+                    </div>
+                )}
+            </div>
+
+            <div className="mt-6 rounded-2xl bg-white p-6 shadow dark:bg-slate-900">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                            AI Investigation Summary
+                        </h2>
+
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                            Generate a professional investigation summary using alert details, rule evidence, status, priority, assignment, and analyst comments.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleGenerateInvestigationSummary}
+                        disabled={summaryLoading || !alert?._id}
+                        className="rounded-lg bg-purple-600 px-4 py-2 font-semibold text-white shadow transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                        {summaryLoading ? "Generating..." : "Generate Summary"}
+                    </button>
+                </div>
+
+                {summaryError && (
+                    <div className="mt-4 rounded-lg bg-red-50 p-4 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                        {summaryError}
+                    </div>
+                )}
+
+                {investigationSummary && (
+                    <div className="mt-5 rounded-xl border border-purple-100 bg-purple-50/70 p-5 dark:border-purple-800 dark:bg-purple-950/40">
+                        <pre className="whitespace-pre-wrap font-sans text-sm leading-6 text-slate-800 dark:text-slate-100">
+                            {investigationSummary}
+                        </pre>
+                    </div>
+                )}
+            </div>
+
         </div>
     );
 };

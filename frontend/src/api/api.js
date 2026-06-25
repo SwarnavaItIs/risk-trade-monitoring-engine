@@ -187,5 +187,13 @@ export const getRiskAuditResults = (filters = {}) => {
         params: filters
     });
 };
+//for ai embedding
+export const explainAlertWithAI = (alertId) => {
+    return api.post(`/ai/alerts/${alertId}/explain`);
+};
+
+export const generateInvestigationSummary = (alertId) => {
+    return api.post(`/ai/alerts/${alertId}/investigation-summary`);
+};
 
 export default api;

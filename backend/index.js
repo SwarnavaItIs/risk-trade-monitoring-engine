@@ -38,6 +38,7 @@ const riskRuleRoutes = require("./routes/riskRuleRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const systemRoutes = require("./routes/systemRoutes");
 const riskAuditRoutes = require("./routes/riskAuditRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 app.get("/", (req, res) => {
     res.send("Risk Trade Monitoring Engine Backend Running");
@@ -53,6 +54,8 @@ app.use("/api/risk-rules", protect, riskRuleRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/system", protect, systemRoutes);
 app.use("/api/risk-audit", protect, riskAuditRoutes);
+app.use("/api/ai", protect, aiRoutes);
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
