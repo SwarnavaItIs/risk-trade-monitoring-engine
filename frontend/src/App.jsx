@@ -1,15 +1,16 @@
-import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
 import BounceIndicator from "./components/BounceIndicator";
 import ScrollToTop from "./components/ScrollToTop";
+import FloatingAIAssistant from "./components/FloatingAIAssistant";
 
-import Dashboard from './pages/Dashboard';
-import Trades from './pages/Trades';
+import Dashboard from "./pages/Dashboard";
+import Trades from "./pages/Trades";
 import Orders from "./pages/Orders";
-import Alerts from './pages/Alerts';
-import AlertDetails from './pages/AlertDetails';
+import Alerts from "./pages/Alerts";
+import AlertDetails from "./pages/AlertDetails";
 import CsvUpload from "./pages/CsvUpload";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -21,6 +22,7 @@ import Members from "./pages/Members";
 import AuditLogs from "./pages/AuditLogs";
 import SystemHealth from "./pages/SystemHealth";
 import RiskAudit from "./pages/RiskAudit";
+import RiskAssistant from "./pages/RiskAssistant";
 
 const ProtectedLayout = ({ children }) => {
     return (
@@ -31,6 +33,8 @@ const ProtectedLayout = ({ children }) => {
                 {children}
             </main>
 
+            <FloatingAIAssistant />
+
             <BounceIndicator />
         </ProtectedRoute>
     );
@@ -39,8 +43,7 @@ const ProtectedLayout = ({ children }) => {
 const getStoredUser = () => {
     try {
         return JSON.parse(localStorage.getItem("user"));
-    }
-    catch {
+    } catch {
         return null;
     }
 };
@@ -59,57 +62,77 @@ const App = () => {
     return (
         <Router>
             <ScrollToTop />
-            <Routes>
-                <Route path="/" element={<Navigate to="/Dashboard" />} />
 
-                <Route path="/admin/members" element={<Members />} />
+            <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
-                
-                <Route path="/dashboard" element={
-                    <ProtectedLayout>
-                        <Dashboard />
-                    </ProtectedLayout>
-                } />
 
-                <Route path="/trades" element={
-                    <ProtectedLayout>
-                        <Trades />
-                    </ProtectedLayout>
-                } />
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedLayout>
+                            <Dashboard />
+                        </ProtectedLayout>
+                    }
+                />
 
-                <Route path="/orders" element={
-                    <ProtectedLayout>
-                        <Orders />
-                    </ProtectedLayout>
-                } />
+                <Route
+                    path="/trades"
+                    element={
+                        <ProtectedLayout>
+                            <Trades />
+                        </ProtectedLayout>
+                    }
+                />
 
-                <Route path="/alerts" element={
-                    <ProtectedLayout>
-                        <Alerts />
-                    </ProtectedLayout>
-                } />
+                <Route
+                    path="/orders"
+                    element={
+                        <ProtectedLayout>
+                            <Orders />
+                        </ProtectedLayout>
+                    }
+                />
 
-                <Route path="/my-alerts" element={
-                    <ProtectedLayout>
-                        <Alerts assignedToMe />
-                    </ProtectedLayout>
-                } />
+                <Route
+                    path="/alerts"
+                    element={
+                        <ProtectedLayout>
+                            <Alerts />
+                        </ProtectedLayout>
+                    }
+                />
 
-                <Route path="/alerts/:id" element={
-                    <ProtectedLayout>
-                        <AlertDetails />
-                    </ProtectedLayout>
-                } />
+                <Route
+                    path="/my-alerts"
+                    element={
+                        <ProtectedLayout>
+                            <Alerts assignedToMe />
+                        </ProtectedLayout>
+                    }
+                />
 
-                <Route path="/csv-upload" element={
-                    <ProtectedLayout>
-                        <CsvUpload />
-                    </ProtectedLayout>
-                } />
+                <Route
+                    path="/alerts/:id"
+                    element={
+                        <ProtectedLayout>
+                            <AlertDetails />
+                        </ProtectedLayout>
+                    }
+                />
+
+                <Route
+                    path="/csv-upload"
+                    element={
+                        <ProtectedLayout>
+                            <CsvUpload />
+                        </ProtectedLayout>
+                    }
+                />
 
                 <Route
                     path="/risk-rules"
@@ -121,11 +144,38 @@ const App = () => {
                 />
 
                 <Route
-                    path="/admin/audit-logs"
+                    path="/risk-assistant"
                     element={
                         <ProtectedLayout>
-                            <AuditLogs />
+                            <RiskAssistant />
                         </ProtectedLayout>
+                    }
+                />
+
+                <Route
+                    path="/profile"
+                    element={
+                        <ProtectedLayout>
+                            <Profile />
+                        </ProtectedLayout>
+                    }
+                />
+
+                <Route
+                    path="/admin/members"
+                    element={
+                        <AdminLayout>
+                            <Members />
+                        </AdminLayout>
+                    }
+                />
+
+                <Route
+                    path="/admin/audit-logs"
+                    element={
+                        <AdminLayout>
+                            <AuditLogs />
+                        </AdminLayout>
                     }
                 />
 
@@ -144,15 +194,6 @@ const App = () => {
                         <AdminLayout>
                             <RiskAudit />
                         </AdminLayout>
-                    }
-                />
-                
-                <Route
-                    path="/profile"
-                    element={
-                        <ProtectedLayout>
-                            <Profile />
-                        </ProtectedLayout>
                     }
                 />
             </Routes>

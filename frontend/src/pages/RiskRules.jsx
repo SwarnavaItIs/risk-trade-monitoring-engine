@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { getRiskRules, updateRiskRule } from "../api/api";
+import { getRiskRules, updateRiskRule, generateRuleTuningSuggestions } from "../api/api";
 
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
 import useToast from "../hooks/useToast";
+import AIFormattedOutput from "../components/AIFormattedOutput";
 
 const tierOptions = ["", "PRE_TRADE", "BEHAVIORAL", "POST_TRADE"];
 const actionOptions = ["BLOCK", "ALERT", "AUDIT"];
@@ -35,6 +36,11 @@ const RiskRules = () => {
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const [error, setError] = useState("");
+
+    const [aiSuggestions, setAiSuggestions] = useState("");
+    const [aiSuggestionLoading, setAiSuggestionLoading] = useState(false);
+    const [aiSuggestionError, setAiSuggestionError] = useState("");
+    const [copySuccess, setCopySuccess] = useState("");
 
     const fetchRules = async (appliedFilters = filters) => {
         try {
@@ -200,6 +206,35 @@ const RiskRules = () => {
         return "bg-purple-100 text-purple-700";
     };
 
+    const handleGenerateRuleSuggestions = async () => {
+        try {
+            setAiSuggestionLoading(true);
+            setAiSuggestionError("");
+            setAiSuggestions("");
+            setCopySuccess("");
+
+            const response = await generateRuleTuningSuggestions();
+
+            setAiSuggestions(response.data.data.suggestions);
+        } catch (err) {
+            setAiSuggestionError(
+                err.response?.data?.message ||
+                "Failed to generate rule tuning suggestions"
+            );
+        } finally {
+            setAiSuggestionLoading(false);
+        }
+    };
+
+    const handleCopyRuleSuggestions = async () => {
+        try {
+            await navigator.clipboard.writeText(aiSuggestions);
+            setCopySuccess("Suggestions copied to clipboard");
+        } catch {
+            setCopySuccess("Failed to copy suggestions");
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-100 p-8">
@@ -246,6 +281,63 @@ const RiskRules = () => {
                 </div>
             )}
 
+            <div className="mt-6 mb-8 rounded-2xl bg-white p-6 shadow dark:bg-slate-900">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                            AI Rule Tuning Suggestions
+                        </h2>
+
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                            Generate AI-assisted recommendations based on rule activity,
+                            blocked events, alert frequency, and recent risk events. Suggestions
+                            are advisory only and do not modify rules automatically.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleGenerateRuleSuggestions}
+                        disabled={aiSuggestionLoading}
+                        className="rounded-lg bg-purple-600 px-4 py-2 font-semibold text-white shadow transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                        {aiSuggestionLoading ? "Analyzing..." : "Suggest Rule Tuning"}
+                    </button>
+                </div>
+
+                {aiSuggestionError && (
+                    <div className="mt-4 rounded-lg bg-red-50 p-4 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                        {aiSuggestionError}
+                    </div>
+                )}
+
+                {aiSuggestions && (
+                    <div className="mt-5 rounded-xl border border-purple-100 bg-purple-50/70 p-5 dark:border-purple-800 dark:bg-purple-950/40">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                                Generated Suggestions
+                            </h3>
+
+                            <button
+                                type="button"
+                                onClick={handleCopyRuleSuggestions}
+                                className="rounded-lg border border-purple-300 px-3 py-1.5 text-sm font-semibold text-purple-700 transition hover:bg-purple-100 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-950"
+                            >
+                                Copy Suggestions
+                            </button>
+                        </div>
+
+                        {copySuccess && (
+                            <p className="mb-3 text-sm font-semibold text-emerald-600 dark:text-emerald-300">
+                                {copySuccess}
+                            </p>
+                        )}
+
+                        <AIFormattedOutput content={aiSuggestions} />
+                    </div>
+                )}
+            </div>
+            
             <div className="mb-6 rounded-2xl bg-white p-6 shadow">
                 <h2 className="mb-4 text-xl font-bold text-slate-900">
                     Filters

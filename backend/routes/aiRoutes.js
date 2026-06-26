@@ -4,7 +4,10 @@ const {
     getAIHealth,
     testAIService,
     explainAlert,
-    generateInvestigationSummary
+    generateInvestigationSummary,
+    generateDailyRiskReport,
+    askRiskAssistant,
+    generateRuleTuningSuggestions
 } = require("../controllers/aiController");
 
 const router = express.Router();
@@ -16,5 +19,8 @@ router.post(
     "/alerts/:alertId/investigation-summary",
     generateInvestigationSummary
 );
+router.post("/reports/daily-risk", generateDailyRiskReport);
+router.post("/risk-assistant/query", askRiskAssistant);
+router.post("/risk-rules/suggestions", generateRuleTuningSuggestions);
 
 module.exports = router;

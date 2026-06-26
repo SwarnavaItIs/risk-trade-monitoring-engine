@@ -2,310 +2,311 @@
 
 [![CI](https://github.com/SwarnavaItIs/risk-trade-monitoring-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/SwarnavaItIs/risk-trade-monitoring-engine/actions/workflows/ci.yml)
 
-A full-stack trade surveillance and pre-trade risk control platform that monitors trading activity, blocks risky trades before execution, generates explainable alerts, and provides admin-configurable risk rules with auditability and analyst workflows.
+A full-stack risk and compliance monitoring platform for trade surveillance, pre-trade controls, order lifecycle monitoring, alert investigation, post-trade audits, and operational health visibility.
 
-This project is designed like a simplified financial risk monitoring system inspired by real-world market access controls, trade surveillance systems, and compliance workflows.
+The app is built like a simplified market risk system: trades are checked before acceptance, suspicious behavior generates alerts, admins can tune risk rules, and analysts can investigate assigned alerts with comments, priorities, deadlines, and AI-assisted summaries.
 
----
-# Deployed Links
+## Deployed Links
 
-Frontend https://risk-trade-monitoring-engine.vercel.app/
+- Frontend: https://risk-trade-monitoring-engine.vercel.app/
+- Backend: https://risk-trade-monitoring-engine.onrender.com
 
-Backend https://risk-trade-monitoring-engine.onrender.com
+## What The System Does
 
----
-## Project Overview
+- Accepts manual trades and CSV trade uploads.
+- Blocks risky trades before saving when pre-trade controls fail.
+- Generates alerts from behavioral and order-lifecycle surveillance rules.
+- Tracks submitted, cancelled, partially filled, and filled orders.
+- Lets admins assign alerts to analysts, set priority, and define review deadlines.
+- Lets analysts review alerts, add investigation comments, and update status.
+- Stores audit logs for important admin, alert, trade, CSV, and order actions.
+- Runs post-trade audit checks for concentration and burn-rate risk.
+- Uses optional Redis, Finnhub, Gemini, and C++ integrations with safe fallbacks.
+- Provides dashboard analytics, AI risk assistance, system health, and CI verification.
 
-The Risk Trade Monitoring Engine allows users to submit trades manually or through CSV upload. Every trade passes through a multi-layer risk engine:
-
-1. **Pre-trade risk controls** decide whether a trade should be blocked before saving.
-2. **Behavioral surveillance rules** detect suspicious trading patterns after accepted trades.
-3. **Risk events and audit logs** track blocked trades, triggered rules, alert actions, and admin changes.
-4. **Admin dashboards** allow risk rule configuration, member management, and audit review.
-5. **Analyst workflows** allow alert investigation, assignment, comments, and status updates.
-6. **Order lifecycle monitoring** tracks submitted, cancelled, partially filled, and filled orders.
-7. **Post-trade audits** detect portfolio concentration and unusually fast capital usage.
-
----
 ## Tech Stack
 
 ### Frontend
 
-* React
-* Vite
-* Tailwind CSS
-* React Router
-* Axios
-* Recharts
+- React
+- Vite
+- React Router
+- Tailwind CSS
+- Axios
+- Recharts
+- React Markdown with GFM support
+- Google OAuth client
 
 ### Backend
 
-* Node.js
-* Express.js
-* MongoDB
-* Mongoose
-* JWT Authentication
-* Google OAuth
-* Multer
-* CSV Parser
+- Node.js
+- Express
+- MongoDB and Mongoose
+- JWT authentication
+- Google OAuth verification
+- Multer and CSV Parser
+- Node test runner
 
-### Risk / Performance Layer
+### Risk And Integration Layer
 
-* Redis for rolling-window risk checks
-* C++17 behavioral risk engine
-* JavaScript fallback risk engine
-* Finnhub/static reference-price market data service
-* MongoDB aggregation-based post-trade audit runner
+- Dynamic MongoDB-backed risk rules
+- Optional Redis rolling-window/cache layer
+- Optional C++17 behavioral risk engine
+- JavaScript and MongoDB fallback risk logic
+- Optional Finnhub market data provider
+- Static reference-price fallback
+- Optional Gemini AI integration
+- Local fallback explanations for alert AI workflows
 
-### Deployment
+## Core Domains
 
-* Frontend: Vercel
-* Backend: Render
-* Database: MongoDB Atlas
-* Redis: Local Docker / Render Key Value / Redis provider
+### Authentication And Roles
 
----
+- Email/password registration and login.
+- Google OAuth login/register.
+- JWT-protected backend routes.
+- ADMIN and ANALYST roles.
+- Admin registration protected by `ADMIN_REGISTRATION_SECRET`.
+- Forgot/reset password flow.
+- Profile page with Google photo or fallback initials.
 
-## Core Features
+### Trades
 
-### Authentication and Authorization
+- Manual trade creation.
+- CSV trade upload.
+- Native date-time picker for trade execution time.
+- Pre-trade validation and blocking.
+- Blocked-trade feedback with failed rule details.
+- Behavioral alert generation after accepted trades.
+- RiskEvent logging for blocked trades and triggered rules.
 
-* Email/password authentication
-* Google OAuth login/register
-* JWT-based protected routes
-* ADMIN and ANALYST roles
-* Secure admin registration using admin secret
-* Profile page with Google profile photo or fallback initials
-* Forgot password and reset password flow
+### Orders
 
-### Trade Management
+Orders are separate from trades. They do not replace the existing Trade model.
 
-* Add trades manually
-* Upload trades using CSV
-* Drag-and-drop CSV upload UI
-* Select optional trade execution time using a native calendar and time picker
-* Validate trade fields before saving
-* Show accepted trades and blocked trade feedback
-* Display failed CSV rows with failed rule details
+- Create orders.
+- View and filter orders.
+- Cancel orders.
+- Fill orders fully or partially.
+- Track `SUBMITTED`, `PARTIALLY_FILLED`, `FILLED`, and `CANCELLED`.
+- Calculate order value automatically.
+- Log order create/cancel/fill audit events.
+- Activate R9 order-to-trade/cancel-to-fill surveillance.
 
-### Order Lifecycle Management
+### Alerts
 
-* Create submitted orders without replacing the existing Trade model
-* Track `SUBMITTED`, `PARTIALLY_FILLED`, `FILLED`, and `CANCELLED` states
-* Fill or cancel active orders
-* Filter orders by status, trader, symbol, and side
-* Record order creation, fill, and cancellation actions in audit logs
-* Evaluate R9 cancellation-to-fill behavior after lifecycle changes
+- View all alerts.
+- Filter by severity, status, symbol, trader, priority, and assignment.
+- View "My Alerts" assigned to the logged-in user.
+- Update alert status without breaking the original review workflow.
+- Admins can assign alerts to analysts/admins.
+- Admins can update priority and review deadline.
+- Users can add review comments.
+- Comment history is preserved.
+- Latest comment is mirrored into `reviewComment` for compatibility.
+- Alerts can reference either a trade or an order.
 
-### Dynamic Risk Rule Engine
+### Audit Logs
 
-Risk rules are stored in MongoDB and can be updated by admins without changing source code.
+Audit logs are created for important workflow actions, including:
 
-Rules are divided into three tiers:
+- Risk rule updates.
+- Alert assignment.
+- Alert comments.
+- Alert status changes.
+- Alert priority updates.
+- CSV upload processing.
+- Order creation.
+- Order cancellation.
+- Order fill actions.
+- Member management actions.
 
-| Tier       | Purpose                                      |
-| ---------- | -------------------------------------------- |
-| PRE_TRADE  | Blocks invalid or risky trades before saving |
-| BEHAVIORAL | Generates alerts after accepted trades       |
-| POST_TRADE | Runs admin-triggered audit-style analytics    |
+### AI Assistance
 
-### Pre-Trade Hard Block Rules
+The AI layer is optional and uses Gemini when configured.
 
-| Rule | Description               |
-| ---- | ------------------------- |
-| R1   | Single Order Value Cap    |
-| R2   | Price Collar Check        |
-| R3   | Daily Notional Limit      |
-| R4   | Duplicate Order Detection |
-| R5   | Single Order Quantity Cap |
+- Alert explanation generation.
+- Alert investigation summary generation.
+- Daily risk report generation.
+- Natural-language Risk Assistant page.
+- Rule tuning suggestion endpoint.
+- Markdown output rendering in the frontend.
+- Local fallback explanations for alert explanation and investigation summary when Gemini is unavailable.
 
-These rules can block trades before database insertion.
+Daily reports, Risk Assistant responses, and rule tuning suggestions still require a configured AI provider.
 
-### Behavioral Surveillance Rules
+### Toasts And UI Feedback
 
-| Rule | Description                             |
-| ---- | --------------------------------------- |
-| R6   | High-Frequency Velocity                 |
-| R7   | Wash Trade Detection                    |
-| R8   | Momentum Ignition                       |
-| R9   | Order-to-Trade Ratio                    |
-| R10  | After-Hours / Restricted Symbol Trading |
+The frontend includes a shared toast system used across action-heavy workflows:
 
-These rules generate explainable alerts.
+- Login/register/logout.
+- Forgot/reset password.
+- Manual trade submission.
+- CSV upload.
+- Order creation/fill/cancel.
+- Alert status, assignment, priority, comments, and AI actions.
+- Member management.
+- Risk rule updates.
+- Risk audit runs.
+- System health refreshes.
 
-R7 compares opposite-side trade quantity and price similarity. R8 requires a configurable minimum total notional and can optionally verify price direction. R9 uses real order lifecycle data.
+## Risk Rules
+
+Risk rules are stored in MongoDB and seeded with upsert behavior, so rerunning the seeder updates existing rules without creating duplicates.
+
+| Rule | Name | Tier | Action |
+| --- | --- | --- | --- |
+| R1 | Single Order Value Cap | PRE_TRADE | BLOCK |
+| R2 | Price Collar Check | PRE_TRADE | BLOCK |
+| R3 | Daily Notional Limit | PRE_TRADE | BLOCK |
+| R4 | Duplicate Order Detection | PRE_TRADE | BLOCK |
+| R5 | Single Order Quantity Cap | PRE_TRADE | BLOCK |
+| R6 | High-Frequency Velocity | BEHAVIORAL | ALERT |
+| R7 | Wash Trade Detection | BEHAVIORAL | ALERT |
+| R8 | Momentum Ignition | BEHAVIORAL | ALERT |
+| R9 | Order-to-Trade Ratio | BEHAVIORAL | ALERT |
+| R10 | After-Hours / Restricted Symbol Trading | BEHAVIORAL | ALERT |
+| R11 | Cumulative Portfolio Concentration | POST_TRADE | AUDIT |
+| R12 | Aggregate Capital Burn Rate | POST_TRADE | AUDIT |
+
+### Pre-Trade Rules
+
+Pre-trade rules run before a trade is saved.
+
+- R1 blocks trades whose value exceeds the single-order cap.
+- R2 blocks trades whose price is outside the configured collar around a reference market price.
+- R3 blocks trades that would exceed the trader's daily notional limit.
+- R4 blocks duplicate orders submitted inside a short window.
+- R5 blocks oversized quantities.
+
+### Behavioral Rules
+
+Behavioral rules run after accepted trades or after order lifecycle updates.
+
+- R6 detects excessive trade velocity.
+- R7 detects same-trader opposite-side trades with similar symbol, quantity, and price inside a window.
+- R8 detects rapid same-side trading with minimum trade count and notional thresholds.
+- R9 detects excessive cancellations compared with filled or partially filled orders.
+- R10 detects after-hours trading and restricted-symbol activity.
 
 ### Post-Trade Audit Rules
 
-| Rule | Description                        |
-| ---- | ---------------------------------- |
-| R11  | Cumulative Portfolio Concentration |
-| R12  | Aggregate Capital Burn Rate        |
+Admins run these from the Risk Audit page.
 
-Admins can run these rules from the Risk Audit page. Findings are stored as `AUDIT_TRIGGERED` risk events and remain available in the results table.
+- R11 detects daily symbol concentration for a trader.
+- R12 detects unusually fast capital usage in the last hour.
 
-### Redis Risk Checks
+Findings are stored as `AUDIT_TRIGGERED` RiskEvents and shown in the Risk Audit results table.
 
-Redis is used for real-time rolling-window checks:
+## Fallback Architecture
 
-* Duplicate order detection
-* High-frequency trade velocity
-* Momentum ignition detection
-* Latest market-price caching with a 60-second TTL
+MongoDB is required. Redis, C++, Finnhub, and Gemini are optional.
 
-If Redis is unavailable, rolling-window risk checks fall back to MongoDB where supported, while market-price lookup continues through Finnhub and static reference prices.
+### Redis
+
+Redis is used when `REDIS_URL` is configured and connected.
+
+- Rolling-window checks for selected risk rules.
+- Market-price cache keys such as `market:last-price:TCS`.
+- 60-second TTL for cached market prices.
+- System Health page reports enabled and connected status.
+
+If Redis is missing or disconnected, supported logic falls back to MongoDB/JavaScript paths.
 
 ### C++ Risk Engine
 
-A C++17 engine supports low-latency behavioral risk checks for:
+The backend can call a C++17 executable for supported low-latency behavioral checks.
 
-* High-frequency velocity
-* Wash trade detection
-* Momentum ignition
+- Windows executable: `backend/cpp_risk_engine/risk_engine.exe`
+- Linux/macOS executable: `backend/cpp_risk_engine/risk_engine`
+- Status is available through the System Health page.
+- Missing executable, timeout, crash, or invalid JSON returns to JavaScript fallback behavior.
 
-The Node.js backend calls the C++ executable through child processes. Enhanced quantity, price, notional, and direction validation for R7/R8 is applied by the JavaScript behavioral layer so results remain consistent. If the C++ engine is unavailable, the system safely falls back to JavaScript/Redis logic.
+### Market Data
 
-### Market Data for R2
-
-The R2 Price Collar Check resolves the latest reference price through this fallback chain:
+R2 Price Collar Check uses this lookup chain:
 
 ```txt
 Redis cache -> Finnhub quote API -> Static reference price -> Unavailable
 ```
 
-* Redis prices use keys such as `market:last-price:TCS` with a 60-second TTL.
-* Finnhub is optional and only used when `MARKET_DATA_PROVIDER=FINNHUB` and an API key are configured.
-* Missing Redis or Finnhub access does not stop trade evaluation.
-* R2 reasons include the market-data source used for the comparison.
+Static fallback prices are available for common Indian-style symbols such as `RELIANCE`, `TCS`, `INFY`, `PAYTM`, `YESBANK`, `HDFCBANK`, and `ICICIBANK`.
 
-### Alert Management
+### AI
 
-* View generated alerts
-* Filter alerts by severity, status, trader, symbol, priority, and assignment
-* Alert details page
-* Assign alerts to analysts
-* Add review comments
-* Maintain comment history
-* Update alert status
-* Update alert priority
-* View “My Alerts” assigned to the logged-in user
-* Select review deadlines using a native calendar and time picker
+Gemini is used when `GEMINI_API_KEY` is configured.
 
-### Admin Features
+If Gemini is unavailable:
 
-* Admin-only risk rule management page
-* Enable/disable risk rules
-* Update thresholds and parameters
-* Edit severity, risk weight, and action
-* Edit clear R1-R12 descriptions, thresholds, and parameters
-* Admin member management
-* Promote/demote users
-* Remove users
-* Audit log review
-* Run R11/R12 post-trade audits
-* Review Redis, C++, market-data, and fallback health
-
-### Analytics Dashboard
-
-The dashboard includes:
-
-* Total trades
-* Total alerts
-* Total trade value
-* Average risk score
-* Blocked trades
-* Total risk events
-* Alerts by severity
-* Alerts by type
-* Risk trend over time
-* Rule trigger frequency
-* Top blocked rules
-* Recent risk events
-* Top risky traders
-* Top traded stocks
-
-### UI / UX Features
-
-* Responsive floating navbar
-* Mobile hamburger menu
-* Dark mode toggle
-* Persistent theme preference
-* Loading states
-* Skeleton loaders
-* Smooth chart tooltips
-* Transparent/glass tooltip styling
-* Logout overlay with blurred background
-* Scroll-to-top route behavior
-* Clean admin and analyst workflows
-* Native browser calendar and clock pickers for date-time fields
-
----
+- Alert explanation returns a local fallback explanation.
+- Investigation summary returns a local fallback summary.
+- Other AI endpoints return provider errors instead of silently inventing results.
 
 ## System Architecture
 
 ```txt
 React Frontend
     |
-    | Axios API Calls + JWT
+    | Axios API calls + JWT
     v
 Express Backend
     |
     | Mongoose
     v
-MongoDB Atlas
+MongoDB Atlas / MongoDB
 
 Trade Submission
     |
     v
 Pre-Trade Risk Engine
     |
-    |-- R1-R5 pass  --> Save Trade
+    |-- R1-R5/R10 block path -> RiskEvent + blocked response
     |
-    |-- R1-R5 fail  --> Block Trade + Save RiskEvent
-
-Saved Trade
-    |
-    v
-Behavioral Risk Engine
-    |
-    |-- Redis rolling-window checks
-    |-- C++ risk engine
-    |-- Enhanced JavaScript checks and fallback
-    |
-    v
-Alert Generation + RiskEvent Logging
+    |-- Pass path -> Save Trade
+                    |
+                    v
+              Behavioral Risk Engine
+                    |
+                    |-- Redis rolling-window checks when connected
+                    |-- C++ engine for supported fast checks when executable exists
+                    |-- JavaScript/MongoDB fallback logic
+                    |
+                    v
+              Alert + RiskEvent generation
 
 Order Lifecycle
     |
-    |-- Submit / Fill / Cancel
-    |-- R9 cancellation-to-fill evaluation
+    |-- Submit / Fill / Partial Fill / Cancel
     |
     v
-Order Alert + Audit Logging
+R9 Order-to-Trade Ratio evaluation
+    |
+    v
+Alert + RiskEvent + AuditLog where applicable
 
 Admin Post-Trade Audit
     |
-    |-- R11 portfolio concentration
-    |-- R12 capital burn rate
+    |-- R11 concentration audit
+    |-- R12 capital burn-rate audit
     |
     v
 AUDIT_TRIGGERED RiskEvents
 
 Admin / Analyst UI
     |
-    |-- Risk Rules
+    |-- Dashboard
+    |-- Trades and CSV Upload
     |-- Orders
-    |-- Alerts
-    |-- Assignments
+    |-- Alerts and My Alerts
+    |-- Alert Details workflow
+    |-- Risk Rules
     |-- Audit Logs
     |-- Risk Audit
     |-- System Health
-    |-- Analytics
+    |-- AI Risk Assistant
 ```
 
----
-
-## Detailed Project Workflow
+## Detailed Project Workflows
 
 ### 1. User Authentication Workflow
 
@@ -313,9 +314,9 @@ Admin / Analyst UI
 User opens app
     |
     v
-Login/Register Page
+Login / Register page
     |
-    |-- Email + Password
+    |-- Email + password
     |-- Google OAuth
     |
     v
@@ -331,15 +332,13 @@ Frontend stores token and user in localStorage
 Protected dashboard opens
 ```
 
-The frontend sends the JWT token with every protected request:
+Protected API calls include:
 
 ```txt
 Authorization: Bearer <token>
 ```
 
-The backend middleware verifies the token and attaches the logged-in user to the request.
-
----
+The backend auth middleware verifies the JWT and attaches the logged-in user to the request.
 
 ### 2. Role-Based Access Workflow
 
@@ -350,15 +349,15 @@ Logged-in user
 Backend checks role
     |
     |-- ADMIN
-    |     Can manage risk rules, members, assignments, audit logs
+    |     Can manage risk rules, members, alert assignment, audit logs,
+    |     system health, and post-trade audits.
     |
     |-- ANALYST
-          Can view alerts, review assigned alerts, add comments
+          Can create/view trades and orders, view alerts,
+          review assigned alerts, and add comments.
 ```
 
-Admin access is never decided by the frontend. The backend controls role assignment.
-
----
+The frontend hides admin-only links for non-admin users, but backend middleware still enforces the real access control.
 
 ### 3. Manual Trade Creation Workflow
 
@@ -366,19 +365,22 @@ Admin access is never decided by the frontend. The backend controls role assignm
 User submits trade form
     |
     v
-Frontend sends POST /api/trades
+Frontend converts optional tradeTime to ISO string
     |
     v
-Backend validates trade input
+POST /api/trades
     |
     v
-Pre-trade risk engine loads enabled PRE_TRADE rules from MongoDB
+Backend validates input
+    |
+    v
+Pre-trade risk engine loads enabled PRE_TRADE rules
     |
     v
 R1-R5 checks run
 ```
 
-If a pre-trade rule fails:
+If a blocking rule fails:
 
 ```txt
 Trade rejected
@@ -390,10 +392,10 @@ Trade is not saved
 RiskEvent is stored
     |
     v
-Frontend shows "Trade Blocked" card with failed rules
+Frontend shows blocked-trade feedback + toast
 ```
 
-If all pre-trade rules pass:
+If all pre-trade checks pass:
 
 ```txt
 Trade saved in MongoDB
@@ -407,8 +409,6 @@ Alert generated if R6-R10 rules trigger
     v
 RiskEvent stored for analytics
 ```
-
----
 
 ### 4. CSV Upload Workflow
 
@@ -425,7 +425,7 @@ Backend parses CSV rows
 Each row is validated
     |
     v
-Each row passes through pre-trade checks
+Each valid row passes through pre-trade checks
 ```
 
 For each row:
@@ -444,19 +444,11 @@ Blocked row
     -> Save RiskEvent
 ```
 
-The frontend displays:
-
-* Total rows
-* Trades saved
-* Alerts generated
-* Blocked rows
-* Failed rows with reasons
-
----
+The frontend reports total rows, saved trades, generated alerts, blocked rows, failed rows, and upload toast feedback.
 
 ### 5. Pre-Trade Risk Workflow
 
-Pre-trade rules run synchronously before trade insertion.
+Pre-trade rules run before trade insertion.
 
 ```txt
 Incoming trade
@@ -469,13 +461,15 @@ R1: Single Order Value Cap
 R2: Price Collar Check
 R3: Daily Notional Limit
 R4: Duplicate Order Detection
-R5: Quantity Cap
+R5: Single Order Quantity Cap
     |
     v
-If any rule fails -> block trade
+If any blocking rule fails -> block trade
 ```
 
-Example blocked response:
+R2 uses the market data service, so its reason includes the data source used for the reference price.
+
+Example blocked response shape:
 
 ```json
 {
@@ -483,19 +477,45 @@ Example blocked response:
   "blocked": true,
   "failedRules": [
     {
-      "ruleCode": "R1_SINGLE_ORDER_VALUE_CAP",
-      "ruleName": "Single Order Value Cap",
+      "ruleCode": "R2_PRICE_COLLAR_CHECK",
+      "ruleName": "Price Collar Check",
       "severity": "HIGH",
       "action": "BLOCK",
-      "reason": "Trade value exceeds max single order value"
+      "reason": "Order price 2500 deviates 66.67% from market price 1500 (STATIC_FALLBACK)"
     }
   ]
 }
 ```
 
----
+### 6. Market Data Workflow For R2
 
-### 6. Behavioral Risk Workflow
+```txt
+R2 needs latest market price
+    |
+    v
+Check Redis cache: market:last-price:SYMBOL
+    |
+    |-- Hit -> use REDIS_CACHE
+    |
+    |-- Miss
+          |
+          v
+      If Finnhub configured -> call quote API
+          |
+          |-- Success -> cache for 60 seconds + use FINNHUB
+          |
+          |-- Failure / missing key
+                |
+                v
+            Use static fallback price when symbol is known
+                |
+                v
+            Return UNAVAILABLE if no source can price the symbol
+```
+
+This keeps R2 useful even without Redis or an external market-data key.
+
+### 7. Behavioral Risk Workflow
 
 Behavioral rules run after a trade is accepted.
 
@@ -503,142 +523,105 @@ Behavioral rules run after a trade is accepted.
 Accepted trade
     |
     v
-Fetch recent trades
+Fetch recent trade context
     |
     v
-Try C++ risk engine
+Try C++ risk engine for supported checks
     |
-    |-- If C++ works:
-    |       Use C++ result for supported low-latency checks
+    |-- If C++ works -> merge supported results
     |
-    |-- If C++ fails:
-    |       Use Redis / JavaScript fallback
+    |-- If C++ unavailable -> continue with JS/Redis/MongoDB logic
     |
     v
-Apply enhanced JavaScript R7/R8 checks
-Run order-aware R9 and configurable R10 checks
+Apply JavaScript behavioral rules
+    |
+    |-- R6 high-frequency velocity
+    |-- R7 wash trade with quantity/price tolerance
+    |-- R8 momentum ignition with count/notional window
+    |-- R10 after-hours or restricted symbol checks
     |
     v
 Calculate risk score and severity
     |
     v
-Generate alert if risky
+Create Alert + RiskEvent if risky
 ```
 
-Alert severity is based on risk score:
-
-| Risk Score | Severity |
-| ---------- | -------- |
-| 0-29       | LOW      |
-| 30-69      | MEDIUM   |
-| 70+        | HIGH     |
-
----
-
-### 7. Redis Workflow
-
-Redis handles fast rolling-window checks.
+### 8. Redis Workflow
 
 ```txt
-Trade accepted
+Risk rule needs rolling-window state
     |
     v
-Redis sorted set / TTL key updated
+Check Redis connection status
     |
-    v
-Window count calculated
+    |-- Connected
+    |     Use Redis keys/sorted sets for fast window checks
     |
-    v
-If threshold exceeded -> trigger rule
+    |-- Not connected
+          Use MongoDB/JavaScript fallback where implemented
 ```
 
-Used for:
+Redis is optional. Connection state is exposed through `/api/system/engine-health` and the System Health admin page.
 
-* R4 duplicate order detection
-* R6 high-frequency velocity
-* R8 momentum ignition
-
-If Redis is unavailable:
-
-```txt
-Redis error
-    |
-    v
-MongoDB fallback logic runs
-```
-
----
-
-### 8. C++ Risk Engine Workflow
+### 9. C++ Risk Engine Workflow
 
 ```txt
 Node.js behavioral engine
     |
     v
-Builds input payload
+Build input payload for current trade + recent trades
     |
     v
-Spawns C++ executable
+Check executable path exists
+    |
+    |-- Missing -> return null and use fallback
     |
     v
-C++ calculates supported behavioral candidates
+Spawn C++ executable
     |
     v
-C++ returns JSON result
+C++ returns JSON
     |
-    v
-Node.js merges the result with enhanced R7/R8 and remaining JS rules
+    |-- Valid JSON -> merge result
+    |-- Timeout / crash / invalid JSON -> use fallback
 ```
 
-If C++ fails:
+This makes the C++ engine useful when available without making the whole backend dependent on it.
 
-```txt
-Executable missing / timeout / parse error
-    |
-    v
-Backend continues with Redis/JS fallback
-```
-
-This keeps the app reliable while still supporting a high-performance engine.
-
----
-
-### 9. Alert Assignment Workflow
+### 10. Alert Assignment And Review Workflow
 
 ```txt
 Alert generated
     |
     v
-Admin opens alert details
+Admin opens Alert Details
     |
     v
-Admin assigns alert to analyst
+Admin assigns alert to analyst/admin
+    |
+    |-- assignedTo
+    |-- assignedToName
+    |-- assignedToEmail
+    |-- priority
+    |-- reviewDeadline
     |
     v
-Assigned analyst sees alert in My Alerts
+Assigned user sees alert in My Alerts
     |
     v
-Analyst adds comments and updates review status
+Analyst/admin adds comments and updates status
     |
     v
-Comment history and audit logs are saved
+Comment history, latest reviewComment, and audit logs are saved
 ```
 
-Alert workflow supports:
+Alert details also support AI explanation and investigation summary rendering in Markdown.
 
-* Assigned analyst
-* Priority
-* Review deadline
-* Comment history
-* Status updates
-* Audit logging
-
----
-
-### 10. Order Lifecycle Workflow
+### 11. Order Lifecycle And R9 Workflow
 
 ```txt
-Admin or analyst creates an order
+User creates order
     |
     v
 Order stored as SUBMITTED
@@ -647,65 +630,61 @@ Order stored as SUBMITTED
     |-- Cancel -> CANCELLED
     |
     v
-R9 evaluates cancellation-to-fill ratio
+Audit log records lifecycle action
     |
     v
-Alert and RiskEvent generated if the configured ratio is exceeded
+R9 evaluates recent order activity for the trader
+    |
+    v
+If cancel-to-fill ratio exceeds threshold -> create alert + RiskEvent
 ```
 
-Orders and trades coexist. Filling an order updates the order lifecycle; it does not replace the existing manual/CSV Trade workflow.
+Orders and trades coexist. Order lifecycle monitoring powers cancellation-to-fill surveillance without replacing the trade submission workflow.
 
----
-
-### 11. Post-Trade Audit and System Health Workflow
-
-Admins can run R11/R12 from `/admin/risk-audit`:
+### 12. Post-Trade Audit Workflow
 
 ```txt
-Admin runs audit
-    |
-    |-- R11 checks each trader's daily symbol concentration
-    |-- R12 checks each trader's last-hour capital usage
+Admin opens Risk Audit page
     |
     v
-AUDIT_TRIGGERED RiskEvents are stored and shown in the results table
+POST /api/risk-audit/run
+    |
+    |-- R11 calculates daily notional concentration by trader/symbol
+    |-- R12 calculates last-hour capital burn rate
+    |
+    v
+Findings saved as AUDIT_TRIGGERED RiskEvents
+    |
+    v
+GET /api/risk-audit/results displays results table
 ```
 
-The `/admin/system-health` page reports:
+This workflow is intentionally admin-triggered so post-trade audits stay explainable and easy to test.
 
-* Redis enabled and connected status
-* C++ executable availability and resolved path
-* Configured market-data provider
-* Redis, C++, and market-data fallback strategies
-
----
-
-### 12. Risk Rule Management Workflow
+### 13. Risk Rule Management Workflow
 
 ```txt
 Admin opens Risk Rules page
     |
     v
-Frontend fetches rules from backend
+Frontend fetches MongoDB-backed rules
     |
     v
-Admin edits enabled/status/thresholds/weights/action
+Admin edits enabled flag, thresholds, severity, action, risk weight, or description
     |
     v
-Backend updates RiskRules collection
+PUT /api/risk-rules/:id
     |
     v
-Audit log records old and new values
+Backend updates rule and writes audit log
     |
     v
-New trades immediately use updated rules
+New trades and audits use the updated configuration
 ```
 
-This makes the risk engine dynamic and configurable.
+The risk rule seeder uses upserts by `ruleCode`, so default descriptions and parameters can be refreshed safely.
 
----
-
-### 13. Audit Log Workflow
+### 14. Audit Log Workflow
 
 ```txt
 Important action happens
@@ -714,213 +693,115 @@ Important action happens
 Backend calls audit logger
     |
     v
-AuditLog stores:
-    - action
-    - entity type
-    - entity id
-    - performed by
-    - old value
-    - new value
-    - metadata
-    - timestamp
-```
-
-Tracked actions include:
-
-* Risk rule updates
-* Alert assignment
-* Alert comments
-* Alert status updates
-* Alert priority updates
-* Admin/member actions
-* Order creation, cancellation, and fill actions
-
----
-
-### 14. Dashboard Analytics Workflow
-
-```txt
-RiskEvent and Alert data
+AuditLog stores actor, action, entity, before/after values,
+    metadata, IP/user-agent when available, and timestamp
     |
     v
-Dashboard APIs aggregate data
+Admin reviews entries in Audit Logs page
+```
+
+Tracked actions include risk rule updates, alert assignment/comments/status/priority, CSV upload, member actions, and order lifecycle events.
+
+### 15. Dashboard Analytics Workflow
+
+```txt
+Trade, Alert, RiskEvent, and Order data
     |
     v
-Frontend displays charts/cards/tables
+Dashboard APIs aggregate summaries
+    |
+    v
+Frontend renders cards, charts, recent events, and ranked tables
 ```
 
-Dashboard shows:
+Dashboard data includes total trades, alerts, blocked trades, risk events, severity distribution, alert types, rule trigger summaries, top blocked rules, risky traders, top traded stocks, and recent events.
 
-* Blocked trade count
-* Rule trigger frequency
-* Recent risk events
-* Top blocked rules
-* Alerts by severity/type
-* Risk trend
-* Top risky traders
-
----
-
-## Environment Variables
-
-Create a `.env` file inside `backend`.
-
-```env
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRES_IN=7d
-
-ADMIN_REGISTRATION_SECRET=your_admin_secret
-
-GOOGLE_CLIENT_ID=your_google_client_id
-
-FRONTEND_URL=http://localhost:5173
-
-REDIS_URL=redis://localhost:6379
-
-MARKET_DATA_PROVIDER=FINNHUB
-FINNHUB_API_KEY=your_finnhub_api_key
-
-CPP_RISK_ENGINE_ENABLED=true
-CPP_RISK_ENGINE_PATH=
-CPP_RISK_ENGINE_TIMEOUT_MS=2000
-CPP_RISK_ENGINE_LOG_SUCCESS=false
-```
-
-Create a `.env` file inside `frontend`.
-
-```env
-VITE_API_BASE_URL=http://localhost:5000/api
-VITE_GOOGLE_CLIENT_ID=your_google_client_id
-```
-
----
-
-## Running Locally
-
-### 1. Clone repository
-
-```bash
-git clone <your-repo-url>
-cd risk-trade-monitoring-engine
-```
-
-### 2. Install backend dependencies
-
-```bash
-cd backend
-npm install
-```
-
-### 3. Install frontend dependencies
-
-```bash
-cd ../frontend
-npm install
-```
-
-### 4. Start Redis locally
-
-Redis is optional because MongoDB/JavaScript fallbacks are built in. To enable the faster rolling-window and market-data cache paths, start Redis using Docker:
-
-```bash
-docker run --name risk-redis -p 6379:6379 -d redis
-```
-
-If container already exists:
-
-```bash
-docker start risk-redis
-```
-
-### 5. Seed default risk rules
-
-```bash
-cd backend
-npm run seed:risk-rules
-```
-
-The seeder updates rules by unique `ruleCode` using upserts, so rerunning it refreshes defaults without creating duplicate rules. MongoDB Atlas must allow the current machine's IP address.
-
-### 6. Build C++ engine locally
-
-On Windows:
-
-```bash
-npm run build:cpp:win
-```
-
-On Linux/macOS:
-
-```bash
-npm run build:cpp:linux
-```
-
-### 7. Start backend
-
-```bash
-npm run dev
-```
-
-### 8. Start frontend
-
-```bash
-cd ../frontend
-npm run dev
-```
-
-Frontend runs on:
+### 16. AI Risk Workflow
 
 ```txt
-http://localhost:5173
+User asks for AI output
+    |
+    |-- Alert explanation
+    |-- Investigation summary
+    |-- Daily risk report
+    |-- Risk Assistant question
+    |-- Rule tuning suggestions
+    |
+    v
+Backend collects relevant risk context
+    |
+    v
+Gemini provider is called when configured
+    |
+    |-- Success -> Markdown response returned
+    |-- Provider unavailable
+          |
+          |-- Alert explanation/summary -> local fallback content
+          |-- Other AI routes -> provider error response
+    |
+    v
+Frontend renders Markdown safely with AIFormattedOutput
 ```
 
-Backend runs on:
+This keeps AI helpful while making provider failure visible instead of silent.
+
+### 17. System Health Workflow
 
 ```txt
-http://localhost:5000
+Admin opens System Health
+    |
+    v
+GET /api/system/engine-health
+    |
+    v
+Backend reports:
+    - Redis enabled/connected/urlConfigured
+    - C++ executable availability/path/platform
+    - Market data provider/configuration
+    - Fallback strategy descriptions
 ```
 
----
+Admins can quickly see whether Redis, C++, and market data are active or whether fallback behavior is being used.
 
-## Important Scripts
+### 18. Toast Feedback Workflow
 
-### Backend
-
-```bash
-npm run dev
-npm start
-npm test
-npm run seed:risk-rules
-npm run build:cpp:win
-npm run build:cpp:linux
-npm run check:cpp
+```txt
+User clicks an action button
+    |
+    v
+API request runs
+    |
+    |-- Success -> success toast with action result
+    |-- Failure -> danger toast with backend/client error message
 ```
 
-### Frontend
+The shared ToastProvider keeps feedback consistent across auth, trades, CSV upload, orders, alerts, members, risk rules, risk audit, and system health.
+## Frontend Pages
 
-```bash
-npm run dev
-npm run build
-npm run lint
+- `/dashboard` - Analytics dashboard and daily AI risk report.
+- `/trades` - Manual trade creation and trade list.
+- `/orders` - Order lifecycle creation, filters, fill, and cancel actions.
+- `/alerts` - Alert list and filters.
+- `/my-alerts` - Alerts assigned to the logged-in user.
+- `/alerts/:id` - Alert details, review workflow, comments, AI explanation, and investigation summary.
+- `/csv-upload` - CSV trade upload.
+- `/risk-rules` - Admin risk rule management.
+- `/risk-assistant` - Natural-language AI risk assistant.
+- `/profile` - User profile.
+- `/admin/members` - Admin member management.
+- `/admin/audit-logs` - Admin audit logs.
+- `/admin/system-health` - Redis, C++, market data, and fallback health.
+- `/admin/risk-audit` - R11/R12 post-trade audit runner and results.
+
+Admin-only links are hidden in the navbar for non-admin users and protected again by backend/admin route checks where applicable.
+
+## Backend API Overview
+
+All protected endpoints expect:
+
+```txt
+Authorization: Bearer <token>
 ```
-
----
-
-## Example CSV Format
-
-```csv
-traderId,traderName,stockSymbol,tradeType,quantity,price,tradeTime
-T1001,Aman Roy,INFY,BUY,10,1500,2026-05-20T10:00:00
-T1002,Neha Roy,PAYTM,BUY,6000,450,2026-05-20T10:05:00
-T1003,Rahul Mehta,RELIANCE,BUY,2000,2800,2026-05-20T10:10:00
-```
-
----
-
-## Key API Areas
 
 ### Auth
 
@@ -957,21 +838,13 @@ PUT  /api/orders/:id/fill
 ### Alerts
 
 ```txt
-GET /api/alerts
-GET /api/alerts/:id
-PUT /api/alerts/:id/status
-PUT /api/alerts/:id/assign
+GET  /api/alerts
+GET  /api/alerts/assigned/me
+GET  /api/alerts/:id
+PUT  /api/alerts/:id/status
+PUT  /api/alerts/:id/assign
 POST /api/alerts/:id/comments
-PUT /api/alerts/:id/priority
-GET /api/alerts/assigned/me
-```
-
-### Risk Rules
-
-```txt
-GET /api/risk-rules
-GET /api/risk-rules/:id
-PUT /api/risk-rules/:id
+PUT  /api/alerts/:id/priority
 ```
 
 ### Dashboard
@@ -988,6 +861,14 @@ GET /api/dashboard/blocked-trade-summary
 GET /api/dashboard/recent-risk-events
 ```
 
+### Risk Rules
+
+```txt
+GET /api/risk-rules
+GET /api/risk-rules/:id
+PUT /api/risk-rules/:id
+```
+
 ### Admin
 
 ```txt
@@ -997,6 +878,13 @@ DELETE /api/admin/members/:id
 GET    /api/admin/audit-logs
 ```
 
+### System
+
+```txt
+GET /api/system/engine-health
+GET /api/system/market-price/:symbol
+```
+
 ### Risk Audit
 
 ```txt
@@ -1004,28 +892,183 @@ POST /api/risk-audit/run
 GET  /api/risk-audit/results
 ```
 
-### System Health
+### AI
 
 ```txt
-GET /api/system/engine-health
-GET /api/system/market-price/:symbol
+GET  /api/ai/health
+POST /api/ai/test
+POST /api/ai/alerts/:alertId/explain
+POST /api/ai/alerts/:alertId/investigation-summary
+POST /api/ai/reports/daily-risk
+POST /api/ai/risk-assistant/query
+POST /api/ai/risk-rules/suggestions
 ```
 
-The Risk Audit and System Health endpoints are ADMIN-only.
+## Environment Variables
 
----
+Create `backend/.env`:
 
-## Testing and Continuous Integration
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+MONGO_CONNECT_TIMEOUT_MS=10000
 
-Backend tests use Node's built-in test runner and cover risk rules, alert assignment, order lifecycle, audit generation, market data, Redis/C++ status behavior, and protected system routes.
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=7d
+ADMIN_REGISTRATION_SECRET=your_admin_registration_secret
+
+GOOGLE_CLIENT_ID=your_google_client_id
+FRONTEND_URL=http://localhost:5173
+
+REDIS_URL=redis://localhost:6379
+
+MARKET_DATA_PROVIDER=FINNHUB
+FINNHUB_API_KEY=your_finnhub_api_key
+
+CPP_RISK_ENGINE_ENABLED=true
+CPP_RISK_ENGINE_PATH=
+CPP_RISK_ENGINE_TIMEOUT_MS=2000
+CPP_RISK_ENGINE_LOG_SUCCESS=false
+
+AI_PROVIDER=GEMINI
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-1.5-flash
+```
+
+Create `frontend/.env`:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+```
+
+For basic local development, MongoDB and JWT values are required. Redis, Finnhub, C++, and Gemini can be left unconfigured if you are comfortable using the fallback behavior.
+
+## Running Locally
+
+### 1. Install backend dependencies
+
+```bash
+cd backend
+npm install
+```
+
+### 2. Install frontend dependencies
+
+```bash
+cd ../frontend
+npm install
+```
+
+### 3. Seed default risk rules
+
+```bash
+cd ../backend
+npm run seed:risk-rules
+```
+
+The seeder uses `ruleCode` upserts, so it updates existing defaults without creating duplicate rules.
+
+### 4. Optional: build the C++ engine
+
+Windows:
+
+```bash
+npm run build:cpp:win
+```
+
+Linux/macOS:
+
+```bash
+npm run build:cpp:linux
+```
+
+Verify:
+
+```bash
+npm run check:cpp
+```
+
+### 5. Optional: start Redis locally
+
+```bash
+docker run --name risk-redis -p 6379:6379 -d redis
+```
+
+If the container already exists:
+
+```bash
+docker start risk-redis
+```
+
+### 6. Start backend
+
+```bash
+cd backend
+npm run dev
+```
+
+Backend default URL:
+
+```txt
+http://localhost:5000
+```
+
+### 7. Start frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+Frontend default URL:
+
+```txt
+http://localhost:5173
+```
+
+## Scripts
+
+### Backend
+
+```bash
+npm run dev
+npm start
+npm test
+npm run seed:risk-rules
+npm run build:cpp:win
+npm run build:cpp:linux
+npm run check:cpp
+```
+
+### Frontend
+
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
+
+## Example CSV Format
+
+```csv
+traderId,traderName,stockSymbol,tradeType,quantity,price,tradeTime
+T1001,Aman Roy,INFY,BUY,10,1500,2026-05-20T10:00:00
+T1002,Neha Roy,PAYTM,BUY,6000,450,2026-05-20T10:05:00
+T1003,Rahul Mehta,RELIANCE,BUY,2000,2800,2026-05-20T10:10:00
+```
+
+## Testing And CI
+
+Backend tests:
 
 ```bash
 cd backend
 npm test
-npm run check:cpp
 ```
 
-Frontend verification:
+Frontend checks:
 
 ```bash
 cd frontend
@@ -1033,22 +1076,25 @@ npm run lint
 npm run build
 ```
 
-GitHub Actions runs on pushes and pull requests to `main`:
+CI runs on pushes and pull requests to `main`.
 
-* Installs backend and frontend dependencies with Node.js 20
-* Compiles the C++ engine on Ubuntu
-* Verifies the C++ executable
-* Runs backend tests
-* Builds the frontend
-* Uses safe CI-only environment values and does not require Redis or Finnhub
+The GitHub Actions workflow:
 
----
+- Uses Ubuntu.
+- Sets up Node.js 20.
+- Installs backend and frontend dependencies.
+- Builds the Linux C++ risk engine.
+- Runs the C++ health check.
+- Runs backend tests.
+- Builds the frontend.
+- Uses safe CI-only environment values.
+- Does not require Redis or Finnhub.
 
 ## Deployment Notes
 
-### Backend on Render
+### Backend On Render
 
-Set root directory:
+Root directory:
 
 ```txt
 backend
@@ -1066,25 +1112,28 @@ Start command:
 npm start
 ```
 
-Add environment variables in Render:
+Important environment variables:
 
 ```env
 MONGO_URI=...
 JWT_SECRET=...
 JWT_EXPIRES_IN=7d
-FRONTEND_URL=https://your-vercel-url.vercel.app
-GOOGLE_CLIENT_ID=...
 ADMIN_REGISTRATION_SECRET=...
+GOOGLE_CLIENT_ID=...
+FRONTEND_URL=https://your-frontend-domain
 REDIS_URL=...
 MARKET_DATA_PROVIDER=FINNHUB
 FINNHUB_API_KEY=...
 CPP_RISK_ENGINE_ENABLED=true
 CPP_RISK_ENGINE_PATH=cpp_risk_engine/risk_engine
+AI_PROVIDER=GEMINI
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-1.5-flash
 ```
 
-### Frontend on Vercel
+### Frontend On Vercel
 
-Set root directory:
+Root directory:
 
 ```txt
 frontend
@@ -1102,14 +1151,14 @@ Output directory:
 dist
 ```
 
-Add environment variables in Vercel:
+Important environment variables:
 
 ```env
-VITE_API_BASE_URL=https://your-render-backend-url.onrender.com/api
+VITE_API_BASE_URL=https://your-backend-domain/api
 VITE_GOOGLE_CLIENT_ID=...
 ```
 
-For React Router refresh support, keep `vercel.json` inside the frontend folder:
+For React Router refresh support, keep `frontend/vercel.json`:
 
 ```json
 {
@@ -1121,3 +1170,31 @@ For React Router refresh support, keep `vercel.json` inside the frontend folder:
   ]
 }
 ```
+
+## Troubleshooting
+
+### MongoDB buffering timeout or startup failure
+
+The backend now requires MongoDB before it starts listening. Check:
+
+- `MONGO_URI` is set.
+- MongoDB Atlas allows your current IP address.
+- Your username/password and database permissions are valid.
+- `MONGO_CONNECT_TIMEOUT_MS` is high enough for your network.
+
+### Redis connection errors
+
+Redis is optional. If `REDIS_URL` is set but unreachable, the backend logs Redis errors and uses fallback logic where supported. Remove `REDIS_URL` locally if you do not want Redis attempts.
+
+### C++ engine unavailable
+
+Run the correct build command for your OS, then check `/api/system/engine-health` as an admin. If the executable is missing or crashes, the backend continues with JavaScript/Redis fallback logic.
+
+### Finnhub unavailable or API key missing
+
+R2 Price Collar Check falls back to static reference prices. The reason text includes the source used, such as `FINNHUB` or `STATIC_FALLBACK`.
+
+### Gemini AI errors
+
+Check `GEMINI_API_KEY`, `GEMINI_MODEL`, backend internet access, and provider permissions. Alert explanations and investigation summaries can still return local fallback content.
+

@@ -12,8 +12,13 @@ const {
     buildAlertExplanationPrompt,
     buildInvestigationSummaryPrompt,
     buildLocalAlertExplanation,
-    buildLocalInvestigationSummary
+    buildLocalInvestigationSummary,
+    buildDailyRiskReportPrompt,
+    buildRiskAssistantPrompt,
+    buildRuleTuningSuggestionPrompt
 } = require("../services/aiPromptBuilders");
+
+const { collectDailyRiskReportData, collectRiskAssistantData,collectRuleTuningData } = require("../services/aiDataService");
 
 const buildFallbackResponse = ({ message, field, content, providerMessage }) => {
     return {
@@ -203,9 +208,136 @@ const generateInvestigationSummary = async (req, res) => {
     }
 };
 
+const generateDailyRiskReport = async (req, res) => {
+    try {
+        const reportDate = req.body?.date || new Date().toISOString().slice(0, 10);
+
+        const reportData = await collectDailyRiskReportData(reportDate);
+
+        const result = await callAIModel({
+            systemPrompt: getComplianceSystemPrompt(),
+            userPrompt: buildDailyRiskReportPrompt({
+                reportDate,
+                reportData
+            }),
+            temperature: 0.2
+        });
+
+        if (!result.success) {
+            return res.status(500).json({
+                message: "Failed to generate AI daily risk report",
+                data: {
+                    report: result.content
+                }
+            });
+        }
+
+        res.status(200).json({
+            message: "AI daily risk report generated successfully",
+            data: {
+                reportDate,
+                report: result.content,
+                sourceData: reportData
+            }
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Failed to generate daily risk report",
+            error: error.message
+        });
+    }
+};
+
+const askRiskAssistant = async (req, res) => {
+    try {
+        const { question } = req.body;
+
+        if (!question || !question.trim()) {
+            return res.status(400).json({
+                message: "Question is required"
+            });
+        }
+
+        const { intent, data } = await collectRiskAssistantData(question);
+
+        const result = await callAIModel({
+            systemPrompt: getComplianceSystemPrompt(),
+            userPrompt: buildRiskAssistantPrompt({
+                question,
+                intent,
+                data
+            }),
+            temperature: 0.2
+        });
+
+        if (!result.success) {
+            return res.status(500).json({
+                message: "Failed to generate risk assistant response",
+                data: {
+                    answer: result.content
+                }
+            });
+        }
+
+        res.status(200).json({
+            message: "Risk assistant response generated successfully",
+            data: {
+                question,
+                intent,
+                answer: result.content,
+                sourceData: data
+            }
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Failed to process risk assistant query",
+            error: error.message
+        });
+    }
+};
+
+const generateRuleTuningSuggestions = async (req, res) => {
+    try {
+        const data = await collectRuleTuningData();
+
+        const result = await callAIModel({
+            systemPrompt: getComplianceSystemPrompt(),
+            userPrompt: buildRuleTuningSuggestionPrompt({ data }),
+            temperature: 0.2
+        });
+
+        if (!result.success) {
+            return res.status(500).json({
+                message: "Failed to generate AI rule tuning suggestions",
+                data: {
+                    suggestions: result.content
+                }
+            });
+        }
+
+        res.status(200).json({
+            message: "AI rule tuning suggestions generated successfully",
+            data: {
+                suggestions: result.content,
+                sourceData: data
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to generate rule tuning suggestions",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getAIHealth,
     testAIService,
     explainAlert,
-    generateInvestigationSummary
+    generateInvestigationSummary,
+    generateDailyRiskReport,
+    askRiskAssistant,
+    generateRuleTuningSuggestions
 };

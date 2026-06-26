@@ -196,4 +196,16 @@ export const generateInvestigationSummary = (alertId) => {
     return api.post(`/ai/alerts/${alertId}/investigation-summary`);
 };
 
+export const generateDailyRiskReport = (payload = {}) => {
+    return api.post("/ai/reports/daily-risk", payload);
+};
+
+export const askRiskAssistant = (question) => {
+    return api.post("/ai/risk-assistant/query", { question });
+};
+
+export const generateRuleTuningSuggestions = () => {
+    return api.post("/ai/risk-rules/suggestions");
+};
+
 export default api;

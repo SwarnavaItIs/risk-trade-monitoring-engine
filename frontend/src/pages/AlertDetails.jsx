@@ -14,6 +14,7 @@ import {
 import DateTimeInput from "../components/DateTimeInput";
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
+import AIFormattedOutput from "../components/AIFormattedOutput";
 import useToast from "../hooks/useToast";
 import {
     dateTimeLocalToIso,
@@ -825,9 +826,7 @@ const AlertDetails = () => {
 
                 {aiExplanation && (
                     <div className="mt-5 rounded-xl border border-indigo-100 bg-indigo-50/70 p-5 dark:border-indigo-500/30 dark:bg-indigo-500/10">
-                        <pre className="whitespace-pre-wrap font-sans text-sm leading-6 text-slate-800 dark:text-slate-100">
-                            {aiExplanation}
-                        </pre>
+                        <AIFormattedOutput content={aiExplanation} />
                     </div>
                 )}
             </div>
@@ -862,9 +861,7 @@ const AlertDetails = () => {
 
                 {investigationSummary && (
                     <div className="mt-5 rounded-xl border border-purple-100 bg-purple-50/70 p-5 dark:border-purple-800 dark:bg-purple-950/40">
-                        <pre className="whitespace-pre-wrap font-sans text-sm leading-6 text-slate-800 dark:text-slate-100">
-                            {investigationSummary}
-                        </pre>
+                        <AIFormattedOutput content={investigationSummary} />
                     </div>
                 )}
             </div>

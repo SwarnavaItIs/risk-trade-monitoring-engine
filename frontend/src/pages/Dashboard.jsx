@@ -20,12 +20,14 @@ import {
     getRiskTrend,
     getRuleTriggerSummary,
     getBlockedTradeSummary,
-    getRecentRiskEvents
+    getRecentRiskEvents,
+    generateDailyRiskReport
 } from "../api/api";
 
 import LoadingButton from "../components/LoadingButton";
 import SkeletonLoader from "../components/SkeletonLoader";
 import AlertsSeverityChart from "../components/AlertsSeverityChart";
+import AIFormattedOutput from "../components/AIFormattedOutput";
 
 const GlassTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) {
@@ -69,6 +71,12 @@ const Dashboard = () => {
     const [recentRiskEvents, setRecentRiskEvents] = useState([]);
 
     const [trendTooltipPosition, setTrendTooltipPosition] = useState(null);
+
+    const [dailyReport, setDailyReport] = useState("");
+    const [reportDate, setReportDate] = useState("");
+    const [reportLoading, setReportLoading] = useState(false);
+    const [reportError, setReportError] = useState("");
+    const [copySuccess, setCopySuccess] = useState("");
 
     const fetchDashboardData = async () => {
         try {
@@ -157,6 +165,40 @@ const Dashboard = () => {
         );
     }
 
+    const handleGenerateDailyReport = async () => {
+        try {
+            setReportLoading(true);
+            setReportError("");
+            setDailyReport("");
+            setCopySuccess("");
+
+            const response = await generateDailyRiskReport({
+                date: reportDate || undefined
+            });
+
+            setDailyReport(response.data.data.report);
+        }
+        catch (err) {
+            setReportError(
+                err.response?.data?.message ||
+                "Failed to generate daily risk report"
+            );
+        }
+        finally {
+            setReportLoading(false);
+        }
+    };
+
+    const handleCopyDailyReport = async () => {
+        try {
+            await navigator.clipboard.writeText(dailyReport);
+            setCopySuccess("Report copied to clipboard");
+        }
+        catch {
+            setCopySuccess("Failed to copy report");
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-100 p-8">
             <div className="mb-6">
@@ -167,6 +209,69 @@ const Dashboard = () => {
                 <p className="mt-2 text-slate-600">
                     Real-time risk monitoring overview and trade analytics.
                 </p>
+            </div>
+            <div className="mt-6 mb-8 rounded-2xl bg-white p-6 shadow dark:bg-slate-900">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                            AI Daily Risk Report
+                        </h2>
+
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                            Generate a professional daily compliance report using trades, alerts, blocked events, risk rules, and recent risk activity.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <input
+                            type="date"
+                            value={reportDate}
+                            onChange={(e) => setReportDate(e.target.value)}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                        />
+
+                        <button
+                            type="button"
+                            onClick={handleGenerateDailyReport}
+                            disabled={reportLoading}
+                            className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white shadow transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                            {reportLoading ? "Generating..." : "Generate Report"}
+                        </button>
+                    </div>
+                </div>
+
+                {reportError && (
+                    <div className="mt-4 rounded-lg bg-red-50 p-4 font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">
+                        {reportError}
+                    </div>
+                )}
+
+                {dailyReport && (
+                    <div className="mt-5 rounded-xl border border-indigo-100 bg-indigo-50/70 p-5 dark:border-indigo-800 dark:bg-indigo-950/40">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                                Generated Report
+                            </h3>
+
+                            <button
+                                type="button"
+                                onClick={handleCopyDailyReport}
+                                className="rounded-lg border border-indigo-300 px-3 py-1.5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-950"
+                            >
+                                Copy Report
+                            </button>
+                        </div>
+
+                        {copySuccess && (
+                            <p className="mb-3 text-sm font-semibold text-emerald-600 dark:text-emerald-300">
+                                {copySuccess}
+                            </p>
+                        )}
+
+                        <AIFormattedOutput content={dailyReport} />
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-6">
